@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hướng dẫn tăng tỷ lệ chuyển đổi giỏ hàng — Sales & Marketing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #0f1117;
+  --ink2: #3d4152;
+  --ink3: #6b7280;
+  --paper: #fafaf8;
+  --surface: #ffffff;
+  --border: #e8e6e0;
+  --border2: #d1cec5;
+  --acc-blue: #1a56db;
+  --acc-green: #057a55;
+  --acc-red: #c81e1e;
+  --acc-amber: #92400e;
+  --acc-purple: #5521b5;
+  --bg-blue: #eff6ff;
+  --bg-green: #f0fdf4;
+  --bg-red: #fff5f5;
+  --bg-amber: #fffbeb;
+  --bg-purple: #f5f3ff;
+  --fn: 'Be Vietnam Pro', sans-serif;
+  --mo: 'JetBrains Mono', monospace;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 15px; scroll-behavior: smooth; }
+body { font-family: var(--fn); background: var(--paper); color: var(--ink); line-height: 1.75; -webkit-font-smoothing: antialiased; }
+
+/* ── LAYOUT ── */
+.page { max-width: 860px; margin: 0 auto; padding: 0 24px 100px; }
+
+/* ── COVER ── */
+.cover {
+  background: var(--ink);
+  color: #fff;
+  padding: 72px 48px 60px;
+  border-radius: 0 0 20px 20px;
+  margin-bottom: 56px;
+  position: relative;
+  overflow: hidden;
+}
+.cover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(45deg, rgba(255,255,255,.015) 0, rgba(255,255,255,.015) 1px, transparent 0, transparent 50%);
+  background-size: 20px 20px;
+}
+.cover-tag { font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.45); margin-bottom: 16px; font-family: var(--mo); }
+.cover h1 { font-size: 32px; font-weight: 700; line-height: 1.25; margin-bottom: 12px; }
+.cover-sub { font-size: 15px; color: rgba(255,255,255,.6); max-width: 560px; }
+.cover-meta { display: flex; gap: 24px; margin-top: 36px; flex-wrap: wrap; }
+.cover-stat { }
+.cover-stat-val { font-size: 28px; font-weight: 700; color: #fff; font-family: var(--mo); }
+.cover-stat-lbl { font-size: 11px; color: rgba(255,255,255,.4); margin-top: 2px; letter-spacing: .04em; text-transform: uppercase; }
+.cover-divider { width: 1px; background: rgba(255,255,255,.12); }
+
+/* ── TOC ── */
+.toc { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 28px 32px; margin-bottom: 52px; }
+.toc-title { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--ink3); margin-bottom: 16px; font-family: var(--mo); }
+.toc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+.toc-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--ink2); text-decoration: none; transition: color .15s; }
+.toc-item:hover { color: var(--acc-blue); }
+.toc-item:last-child, .toc-item:nth-last-child(2):nth-child(odd) { border-bottom: none; }
+.toc-num { font-family: var(--mo); font-size: 10px; color: var(--ink3); width: 20px; flex-shrink: 0; }
+.toc-badge { font-size: 9px; padding: 1px 6px; border-radius: 20px; margin-left: auto; flex-shrink: 0; font-weight: 500; }
+.tb-s { background: #fee2e2; color: #991b1b; }
+.tb-m { background: #fef3c7; color: #78350f; }
+.tb-b { background: #d1fae5; color: #065f46; }
+
+/* ── SECTIONS ── */
+.section { margin-bottom: 52px; scroll-margin-top: 24px; }
+.section-header { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 24px; }
+.section-num { font-family: var(--mo); font-size: 11px; color: var(--ink3); margin-top: 4px; flex-shrink: 0; }
+.section h2 { font-size: 21px; font-weight: 700; color: var(--ink); line-height: 1.3; }
+.section-sub { font-size: 13px; color: var(--ink3); margin-top: 3px; }
+
+/* ── CALLOUT ── */
+.callout { border-radius: 10px; padding: 16px 20px; margin-bottom: 16px; display: flex; gap: 14px; align-items: flex-start; }
+.callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+.callout-body { flex: 1; }
+.callout-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.callout-text { font-size: 13px; line-height: 1.65; }
+.callout.red { background: var(--bg-red); border: 1px solid #fecaca; }
+.callout.red .callout-title { color: var(--acc-red); }
+.callout.red .callout-text { color: #7f1d1d; }
+.callout.green { background: var(--bg-green); border: 1px solid #bbf7d0; }
+.callout.green .callout-title { color: var(--acc-green); }
+.callout.green .callout-text { color: #14532d; }
+.callout.amber { background: var(--bg-amber); border: 1px solid #fde68a; }
+.callout.amber .callout-title { color: var(--acc-amber); }
+.callout.amber .callout-text { color: #78350f; }
+.callout.blue { background: var(--bg-blue); border: 1px solid #bfdbfe; }
+.callout.blue .callout-title { color: var(--acc-blue); }
+.callout.blue .callout-text { color: #1e3a8a; }
+.callout.purple { background: var(--bg-purple); border: 1px solid #ddd6fe; }
+.callout.purple .callout-title { color: var(--acc-purple); }
+.callout.purple .callout-text { color: #3b0764; }
+
+/* ── METRIC CARDS ── */
+.metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+.metric-grid.g3 { grid-template-columns: repeat(3, 1fr); }
+.metric-grid.g2 { grid-template-columns: repeat(2, 1fr); }
+.mc { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+.mc-val { font-size: 22px; font-weight: 700; font-family: var(--mo); line-height: 1; margin-bottom: 4px; }
+.mc-lbl { font-size: 11px; color: var(--ink3); }
+.mc-sub { font-size: 10px; color: var(--ink3); margin-top: 2px; }
+
+/* ── ACTION STEPS ── */
+.steps { display: flex; flex-direction: column; gap: 12px; }
+.step { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; display: flex; gap: 16px; }
+.step-num { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; font-family: var(--mo); margin-top: 1px; }
+.step-body { flex: 1; }
+.step-title { font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 5px; }
+.step-desc { font-size: 13px; color: var(--ink2); line-height: 1.65; }
+.step-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.stag { font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: 500; font-family: var(--mo); }
+.stag-r { background: #fee2e2; color: #991b1b; }
+.stag-g { background: #d1fae5; color: #065f46; }
+.stag-b { background: #dbeafe; color: #1e40af; }
+.stag-a { background: #fef3c7; color: #92400e; }
+.stag-p { background: #ede9fe; color: #4c1d95; }
+
+/* ── TABLES ── */
+.data-tbl { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 16px; }
+.data-tbl th { font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--ink3); padding: 8px 12px; text-align: left; border-bottom: 2px solid var(--border); background: var(--paper); font-family: var(--mo); }
+.data-tbl td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--ink2); vertical-align: middle; }
+.data-tbl tr:last-child td { border-bottom: none; }
+.data-tbl tr:hover td { background: var(--paper); }
+.data-tbl .bold { font-weight: 600; color: var(--ink); }
+.tbl-wrap { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 16px; }
+
+/* ── PILL ── */
+.pill { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: 600; font-family: var(--mo); }
+.pill-r { background: #fee2e2; color: #991b1b; }
+.pill-g { background: #d1fae5; color: #065f46; }
+.pill-a { background: #fef3c7; color: #92400e; }
+.pill-b { background: #dbeafe; color: #1e40af; }
+
+/* ── DIVIDER ── */
+.divider { border: none; border-top: 1px solid var(--border); margin: 36px 0; }
+
+/* ── HBAR ── */
+.hbar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 7px; }
+.hbar-lbl { font-size: 12px; color: var(--ink2); width: 160px; flex-shrink: 0; text-align: right; }
+.hbar-track { flex: 1; height: 8px; background: var(--paper); border-radius: 4px; border: 1px solid var(--border); overflow: hidden; }
+.hbar-fill { height: 100%; border-radius: 4px; }
+.hbar-val { font-size: 11px; font-family: var(--mo); width: 50px; flex-shrink: 0; font-weight: 500; }
+
+/* ── CHECKLIST ── */
+.checklist { list-style: none; }
+.checklist li { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--ink2); align-items: flex-start; }
+.checklist li:last-child { border-bottom: none; }
+.check-box { width: 18px; height: 18px; border: 1.5px solid var(--border2); border-radius: 4px; flex-shrink: 0; margin-top: 2px; }
+
+/* ── QUOTE ── */
+.quote { border-left: 3px solid var(--ink); padding: 12px 20px; margin: 16px 0; }
+.quote p { font-size: 14px; font-style: italic; color: var(--ink2); }
+
+/* ── ROLE BADGE ── */
+.role { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; padding: 3px 10px; border-radius: 20px; font-family: var(--mo); }
+.role-s { background: #dbeafe; color: #1e40af; }
+.role-m { background: #d1fae5; color: #065f46; }
+.role-b { background: #ede9fe; color: #4c1d95; }
+
+/* ── PRINT ── */
+@media print {
+  .cover { border-radius: 0; }
+  .page { padding: 0 16px 40px; }
+  .step, .mc, .tbl-wrap { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<div class="cover">
+  <div class="page" style="padding-top:0;padding-bottom:0">
+    <div class="cover-tag">Tài liệu nội bộ · Sales & Marketing · Cập nhật 04/2026</div>
+    <h1>Hướng dẫn đọc dữ liệu<br>& tăng tỷ lệ chuyển đổi giỏ hàng</h1>
+    <div class="cover-sub">Mục tiêu: tăng tỷ lệ thanh toán / giỏ hàng từ <strong style="color:#fff">62.8%</strong> lên <strong style="color:#fff">70%+</strong> — tương đương thêm <strong style="color:#fff">~500M VND/tháng</strong> doanh thu</div>
+    <div class="cover-meta">
+      <div class="cover-stat">
+        <div class="cover-stat-val">18,947</div>
+        <div class="cover-stat-lbl">Sự kiện giỏ hàng / tháng</div>
+      </div>
+      <div class="cover-divider"></div>
+      <div class="cover-stat">
+        <div class="cover-stat-val">7,044</div>
+        <div class="cover-stat-lbl">Giỏ hàng bị bỏ</div>
+      </div>
+      <div class="cover-divider"></div>
+      <div class="cover-stat">
+        <div class="cover-stat-val">3.06 tỷ</div>
+        <div class="cover-stat-lbl">Doanh thu bỏ lỡ / tháng</div>
+      </div>
+      <div class="cover-divider"></div>
+      <div class="cover-stat">
+        <div class="cover-stat-val">306M</div>
+        <div class="cover-stat-lbl">Thu về nếu recover 10%</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+
+<!-- TOC -->
+<div class="toc">
+  <div class="toc-title">Nội dung tài liệu</div>
+  <div class="toc-grid">
+    <a href="#s1" class="toc-item"><span class="toc-num">01</span>Hiểu các chỉ số quan trọng<span class="toc-badge tb-b">Cơ bản</span></a>
+    <a href="#s2" class="toc-item"><span class="toc-num">02</span>Đọc dashboard như thế nào<span class="toc-badge tb-b">Cơ bản</span></a>
+    <a href="#s3" class="toc-item"><span class="toc-num">03</span>Nhóm khách hàng & cách tiếp cận<span class="toc-badge tb-m">Quan trọng</span></a>
+    <a href="#s4" class="toc-item"><span class="toc-num">04</span>Sản phẩm cần ưu tiên xử lý<span class="toc-badge tb-s">Khẩn cấp</span></a>
+    <a href="#s5" class="toc-item"><span class="toc-num">05</span>Action plan Sales — làm gì mỗi ngày<span class="toc-badge tb-s">Khẩn cấp</span></a>
+    <a href="#s6" class="toc-item"><span class="toc-num">06</span>Action plan Marketing — chiến dịch<span class="toc-badge tb-m">Quan trọng</span></a>
+    <a href="#s7" class="toc-item"><span class="toc-num">07</span>Thời điểm vàng & lịch hành động<span class="toc-badge tb-m">Quan trọng</span></a>
+    <a href="#s8" class="toc-item"><span class="toc-num">08</span>KPI theo dõi & mốc thành công<span class="toc-badge tb-b">Theo dõi</span></a>
+  </div>
+</div>
+
+<!-- S1: CÁC CHỈ SỐ -->
+<div class="section" id="s1">
+  <div class="section-header">
+    <div class="section-num">01</div>
+    <div>
+      <h2>Hiểu các chỉ số quan trọng</h2>
+      <div class="section-sub">Những con số bạn cần thuộc lòng trước khi đọc dashboard</div>
+    </div>
+  </div>
+
+  <div class="metric-grid">
+    <div class="mc">
+      <div class="mc-val" style="color:#1a56db">62.8%</div>
+      <div class="mc-lbl">Tỷ lệ chuyển đổi tổng</div>
+      <div class="mc-sub">11,903 / 18,947 giỏ hàng</div>
+    </div>
+    <div class="mc">
+      <div class="mc-val" style="color:#c81e1e">37.2%</div>
+      <div class="mc-lbl">Tỷ lệ bỏ giỏ hàng</div>
+      <div class="mc-sub">7,044 giỏ / tháng</div>
+    </div>
+    <div class="mc">
+      <div class="mc-val" style="color:#c81e1e">3.06 tỷ</div>
+      <div class="mc-lbl">Doanh thu bỏ lỡ / tháng</div>
+      <div class="mc-sub">Recover 10% = +306M</div>
+    </div>
+    <div class="mc">
+      <div class="mc-val" style="color:#057a55">1.6 phút</div>
+      <div class="mc-lbl">Trung bình thanh toán sau</div>
+      <div class="mc-sub">85% trả tiền trong 5 phút</div>
+    </div>
+  </div>
+
+  <div class="callout blue">
+    <div class="callout-icon">💡</div>
+    <div class="callout-body">
+      <div class="callout-title">CR (Conversion Rate) là gì?</div>
+      <div class="callout-text">CR = Số đơn thanh toán ÷ Tổng số lần vào giỏ hàng × 100%. CR tổng là <strong>62.8%</strong> — tức cứ 100 người cho sản phẩm vào giỏ, chỉ 63 người thực sự trả tiền. Mục tiêu đẩy lên <strong>70%</strong>.</div>
+    </div>
+  </div>
+
+  <div class="tbl-wrap">
+    <table class="data-tbl">
+      <thead><tr><th>Thuật ngữ</th><th>Ý nghĩa</th><th>Dùng để làm gì</th></tr></thead>
+      <tbody>
+        <tr><td class="bold" style="font-family:var(--mo)">flg_success = 1</td><td>Đã thanh toán thành công</td><td>Tính CR, doanh thu thực tế</td></tr>
+        <tr><td class="bold" style="font-family:var(--mo)">flg_success = 0</td><td>Vào giỏ nhưng chưa thanh toán</td><td>Danh sách cần follow-up</td></tr>
+        <tr><td class="bold" style="font-family:var(--mo)">Chưa thanh toán</td><td>Đã tạo đơn hàng, chưa trả tiền</td><td>Ưu tiên #1 — gọi điện ngay</td></tr>
+        <tr><td class="bold" style="font-family:var(--mo)">Null login</td><td>Khách chưa đăng nhập</td><td>Chạy remarketing Google/Meta</td></tr>
+        <tr><td class="bold" style="font-family:var(--mo)">Revenue bỏ lỡ</td><td>Tổng tiền của giỏ hàng bị bỏ</td><td>Ưu tiên gọi điện cho đơn lớn</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- S2: ĐỌC DASHBOARD -->
+<div class="section" id="s2">
+  <div class="section-header">
+    <div class="section-num">02</div>
+    <div>
+      <h2>Đọc dashboard như thế nào</h2>
+      <div class="section-sub">Quy trình 5 bước mỗi buổi sáng — mất 10 phút</div>
+    </div>
+  </div>
+
+  <div class="callout amber">
+    <div class="callout-icon">⏰</div>
+    <div class="callout-body">
+      <div class="callout-title">Mỗi sáng 8h30 — làm theo thứ tự này</div>
+      <div class="callout-text">Upload file CSV mới nhất từ hệ thống → mở dashboard → đọc lần lượt 5 tab dưới đây → ghi chú danh sách cần gọi hôm nay.</div>
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num" style="background:#dbeafe;color:#1e40af">1</div>
+      <div class="step-body">
+        <div class="step-title">Tab "Chuẩn TT" — đây là tiền đang chờ thu</div>
+        <div class="step-desc">Xem danh sách đơn <strong>"Chưa thanh toán"</strong>. Đây là khách đã tạo đơn, có mã đơn hàng, nhưng chưa trả tiền. Rất có thể lỗi chuyển khoản hoặc đang chờ duyệt nội bộ. Gọi điện trong ngày — đây là tiền chắc chắn nhất. Hiện có <strong>174 đơn</strong>.</div>
+        <div class="step-tags"><span class="stag stag-r">Sales làm ngay</span><span class="stag stag-b">Tab: Chuẩn TT</span></div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num" style="background:#dbeafe;color:#1e40af">2</div>
+      <div class="step-body">
+        <div class="step-title">Tab "Telesales" — lọc đơn lớn để gọi điện</div>
+        <div class="step-desc">Đặt <strong>Min revenue = 1,000,000</strong> → xem danh sách user có giỏ trị giá trên 1 triệu đang bỏ. Ưu tiên người có SĐT (cột Phone). Gọi trong vòng 2h kể từ lúc họ bỏ giỏ — hiệu quả cao nhất. Hiện có <strong>~500+ user</strong> trên 1 triệu.</div>
+        <div class="step-tags"><span class="stag stag-r">Sales làm ngay</span><span class="stag stag-b">Tab: Telesales</span></div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num" style="background:#dbeafe;color:#1e40af">3</div>
+      <div class="step-body">
+        <div class="step-title">Tab "Contact Recovery" — xuất danh sách email</div>
+        <div class="step-desc">Lọc <strong>Trạng thái: Bỏ giỏ</strong> → xuất CSV → đưa vào tool email marketing gửi email nhắc nhở. Với đơn Hosting/Gsuite lọc thêm <strong>Có SĐT = Có</strong> để Sales gọi thêm.</div>
+        <div class="step-tags"><span class="stag stag-g">Marketing</span><span class="stag stag-b">Tab: Contact Recovery</span></div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num" style="background:#dbeafe;color:#1e40af">4</div>
+      <div class="step-body">
+        <div class="step-title">Tab "Xu hướng" — xem ngày hôm qua có bất thường không</div>
+        <div class="step-desc">Nếu CR ngày hôm qua <strong>dưới 55%</strong> — cần điều tra: lỗi kỹ thuật? Sản phẩm nào đột ngột CR = 0%? Kênh nào sụt giảm? So sánh với trung bình 7 ngày trước.</div>
+        <div class="step-tags"><span class="stag stag-b">Cả team theo dõi</span><span class="stag stag-b">Tab: Xu hướng</span></div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num" style="background:#dbeafe;color:#1e40af">5</div>
+      <div class="step-body">
+        <div class="step-title">Tab "Hosting" — theo dõi riêng nhóm sản phẩm chính</div>
+        <div class="step-desc">Hosting CR chỉ <strong>35%</strong> — thấp hơn nhiều so với Domain (68.9%). Xem top users hosting bỏ lỡ nhiều nhất trong ngày → bổ sung vào danh sách gọi của Sales.</div>
+        <div class="step-tags"><span class="stag stag-r">Sales Hosting</span><span class="stag stag-b">Tab: Hosting</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- S3: NHÓM KHÁCH HÀNG -->
+<div class="section" id="s3">
+  <div class="section-header">
+    <div class="section-num">03</div>
+    <div>
+      <h2>Nhóm khách hàng & cách tiếp cận</h2>
+      <div class="section-sub">4 phân khúc khác nhau — cần chiến lược khác nhau</div>
+    </div>
+  </div>
+
+  <div class="tbl-wrap">
+    <table class="data-tbl">
+      <thead><tr><th>Phân khúc</th><th>CR hiện tại</th><th>Số giỏ bỏ</th><th>Đặc điểm</th><th>Cách tiếp cận</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="bold">🆕 Khách mới<br><span style="font-size:10px;color:var(--ink3)">(1 lần vào giỏ)</span></td>
+          <td><span class="pill pill-g">72.4%</span></td>
+          <td>599 giỏ</td>
+          <td>Mua nhanh, nhu cầu rõ ràng, thường là Domain</td>
+          <td>Giữ UX đơn giản, không làm phiền. Nếu bỏ giỏ → email nhắc sau 1h</td>
+        </tr>
+        <tr>
+          <td class="bold">🔄 Thỉnh thoảng<br><span style="font-size:10px;color:var(--ink3)">(2-3 lần)</span></td>
+          <td><span class="pill pill-a">63.2%</span></td>
+          <td>2,265 giỏ</td>
+          <td>Đã biết sản phẩm, đang cân nhắc</td>
+          <td>Email sequence 3 bước. Hiển thị review khách cũ. Offer nhỏ sau 72h</td>
+        </tr>
+        <tr>
+          <td class="bold">⚠️ Thường xuyên<br><span style="font-size:10px;color:var(--ink3)">(4-10 lần)</span></td>
+          <td><span class="pill pill-r">54.2%</span></td>
+          <td>3,034 giỏ</td>
+          <td>Bỏ nhiều nhất — đang chờ deal hoặc so sánh đối thủ</td>
+          <td><strong>Ưu tiên cao nhất.</strong> Gọi điện trực tiếp. Loyalty badge. Email ưu đãi riêng</td>
+        </tr>
+        <tr>
+          <td class="bold">⭐ Power user<br><span style="font-size:10px;color:var(--ink3)">(10+ lần)</span></td>
+          <td><span class="pill pill-g">71.4%</span></td>
+          <td>1,146 giỏ</td>
+          <td>Quyết định nhanh, mua nhiều, trung thành</td>
+          <td>VIP pricing. Chăm sóc qua account manager riêng. Ưu đãi gia hạn sớm</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout red">
+    <div class="callout-icon">🎯</div>
+    <div class="callout-body">
+      <div class="callout-title">Nhóm cần Sales tập trung nhất: "Thường xuyên (4-10 lần)"</div>
+      <div class="callout-text">3,034 giỏ bỏ — nhiều nhất trong tất cả phân khúc. CR chỉ 54.2%, thấp hơn cả khách mới. Những người này <em>biết sản phẩm tốt</em> nhưng đang chờ một lý do để mua. Một cuộc gọi điện đúng lúc có thể chuyển đổi ngay.</div>
+    </div>
+  </div>
+
+  <div class="callout purple">
+    <div class="callout-icon">👻</div>
+    <div class="callout-body">
+      <div class="callout-title">Khách vãng lai (chưa đăng nhập) — 5,921 người</div>
+      <div class="callout-text">Đây là nhóm hoàn toàn vô hình trong CSV gốc — chỉ thấy được khi upload file XLSX. Trong đó <strong>719 người có Gmail</strong> → chạy remarketing Google Ads với danh sách email này. Số còn lại → retargeting cookie/pixel.</div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- S4: SẢN PHẨM ƯU TIÊN -->
+<div class="section" id="s4">
+  <div class="section-header">
+    <div class="section-num">04</div>
+    <div>
+      <h2>Sản phẩm cần ưu tiên xử lý</h2>
+      <div class="section-sub">Ma trận: doanh thu bỏ lỡ × CR hiện tại — ưu tiên góc dưới phải</div>
+    </div>
+  </div>
+
+  <div class="callout red">
+    <div class="callout-icon">🚨</div>
+    <div class="callout-body">
+      <div class="callout-title">SecureWEB 5.0 — CR = 0%, cần kiểm tra kỹ thuật NGAY HÔM NAY</div>
+      <div class="callout-text">64 lần vào giỏ, 0 lần thanh toán thành công. Đây không phải vấn đề kinh doanh — đây là lỗi kỹ thuật. Báo ngay cho bộ phận kỹ thuật kiểm tra: sản phẩm có available không, giá có hiển thị đúng không, nút checkout có bị lỗi không.</div>
+    </div>
+  </div>
+
+  <div class="tbl-wrap">
+    <table class="data-tbl">
+      <thead><tr><th>Sản phẩm</th><th>CR</th><th>Revenue bỏ lỡ</th><th>Vấn đề</th><th>Hành động</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="bold">Gsuite</td>
+          <td><span class="pill pill-r">28.1%</span></td>
+          <td class="bold" style="color:#c81e1e">751.7M</td>
+          <td>Khách doanh nghiệp cần quy trình B2B, không quyết định ngay</td>
+          <td><span class="role role-s">Sales</span> Gọi điện tư vấn. Tạo form báo giá. Xuất hóa đơn VAT</td>
+        </tr>
+        <tr>
+          <td class="bold">Hosting SSD Linux</td>
+          <td><span class="pill pill-r">31.9%</span></td>
+          <td class="bold" style="color:#c81e1e">369.6M</td>
+          <td>Khách so sánh với đối thủ. Giá ngưỡng 300-500k gây do dự</td>
+          <td><span class="role role-m">Marketing</span> Trang so sánh vs đối thủ. Hiển thị giá/tháng. Thêm trial</td>
+        </tr>
+        <tr>
+          <td class="bold">Wordpress Hosting v2</td>
+          <td><span class="pill pill-a">39.0%</span></td>
+          <td class="bold" style="color:#c81e1e">219.2M</td>
+          <td>Khách không rõ sự khác biệt giữa các gói</td>
+          <td><span class="role role-m">Marketing</span> So sánh gói rõ hơn. Video demo. Chat tư vấn proactive</td>
+        </tr>
+        <tr>
+          <td class="bold">Domain</td>
+          <td><span class="pill pill-a">68.9%</span></td>
+          <td>969.1M</td>
+          <td>Volume lớn nhất — dù CR tốt vẫn bỏ lỡ nhiều nhất</td>
+          <td><span class="role role-s">Sales</span> + <span class="role role-m">Mktg</span> Email automation. Bundle với Whois Protection</td>
+        </tr>
+        <tr>
+          <td class="bold">Hosting SSD Window</td>
+          <td><span class="pill pill-r">14.3%</span></td>
+          <td>35.1M</td>
+          <td>CR cực thấp — có thể do thiếu thông tin kỹ thuật</td>
+          <td><span class="role role-m">Marketing</span> Viết lại mô tả sản phẩm. FAQ kỹ thuật. Case study</td>
+        </tr>
+        <tr>
+          <td class="bold">Whois Protection</td>
+          <td><span class="pill pill-g">82.3%</span></td>
+          <td>1.1M</td>
+          <td>CR tốt nhất — benchmark để học hỏi</td>
+          <td>Áp dụng mô hình này cho các sản phẩm add-on khác</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="margin-bottom:16px">
+    <div style="font-size:12px;font-weight:600;color:var(--ink3);margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em;font-family:var(--mo)">CR theo nhóm giá trị đơn hàng</div>
+    <div class="hbar-row"><span class="hbar-lbl">Dưới 100k đồng</span><div class="hbar-track"><div class="hbar-fill" style="width:69.6%;background:#057a55"></div></div><span class="hbar-val" style="color:#057a55">69.6%</span></div>
+    <div class="hbar-row"><span class="hbar-lbl">100k – 300k</span><div class="hbar-track"><div class="hbar-fill" style="width:65.7%;background:#057a55"></div></div><span class="hbar-val" style="color:#057a55">65.7%</span></div>
+    <div class="hbar-row"><span class="hbar-lbl">300k – 500k</span><div class="hbar-track"><div class="hbar-fill" style="width:56.5%;background:#92400e"></div></div><span class="hbar-val" style="color:#92400e">56.5%</span></div>
+    <div class="hbar-row"><span class="hbar-lbl">500k – 1 triệu</span><div class="hbar-track"><div class="hbar-fill" style="width:38.2%;background:#c81e1e"></div></div><span class="hbar-val" style="color:#c81e1e">38.2%</span></div>
+    <div class="hbar-row"><span class="hbar-lbl">Trên 1 triệu</span><div class="hbar-track"><div class="hbar-fill" style="width:37.5%;background:#c81e1e"></div></div><span class="hbar-val" style="color:#c81e1e">37.5%</span></div>
+  </div>
+
+  <div class="callout amber">
+    <div class="callout-icon">💰</div>
+    <div class="callout-body">
+      <div class="callout-title">Ngưỡng 300k–500k là điểm "do dự" lớn nhất</div>
+      <div class="callout-text">CR giảm đột ngột từ 65.7% xuống 56.5% tại ngưỡng này. Đây là zone tâm lý — khách thấy "không rẻ nhưng cũng chưa đủ quan trọng để quyết định nhanh." Giải pháp: hiển thị giá <strong>/tháng thay vì /năm</strong>, thêm so sánh "tiết kiệm hơn N%", hoặc cho phép trả góp.</div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- S5: ACTION PLAN SALES -->
+<div class="section" id="s5">
+  <div class="section-header">
+    <div class="section-num">05</div>
+    <div>
+      <h2>Action plan Sales — làm gì mỗi ngày</h2>
+      <div class="section-sub"><span class="role role-s">Sales</span> Quy trình hàng ngày để tăng chuyển đổi</div>
+    </div>
+  </div>
+
+  <div class="callout green">
+    <div class="callout-icon">📞</div>
+    <div class="callout-body">
+      <div class="callout-title">Nguyên tắc vàng: gọi trong 2 giờ — hoặc không bao giờ</div>
+      <div class="callout-text">85% đơn hàng được thanh toán trong 5 phút sau khi vào giỏ. Người chưa thanh toán sau 2h thường đã chuyển sang quyết định khác. Gọi càng sớm, tỷ lệ thành công càng cao.</div>
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num" style="background:#fee2e2;color:#991b1b">⚡</div>
+      <div class="step-body">
+        <div class="step-title">Ngay lập tức: Xử lý đơn "Chưa thanh toán" (174 đơn)</div>
+        <div class="step-desc">Vào tab <strong>Chuẩn TT</strong> → sắp xếp theo Revenue giảm dần → gọi điện cho từng người, bắt đầu từ đơn lớn nhất. Nói: <em>"Xin chào, tôi thấy bạn đã tạo đơn [tên sản phẩm] nhưng hệ thống chưa ghi nhận thanh toán, bạn cần hỗ trợ gì không?"</em> Đây là tiền gần như chắc chắn.</div>
+        <div class="step-tags"><span class="stag stag-r">Hôm nay</span><span class="stag stag-g">174 đơn</span><span class="stag stag-b">Tab: Chuẩn TT</span></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:#fee2e2;color:#991b1b">1</div>
+      <div class="step-body">
+        <div class="step-title">8h30 sáng: Lấy danh sách telesales ngày hôm nay</div>
+        <div class="step-desc">Upload CSV mới nhất → Tab <strong>Telesales</strong> → lọc Min revenue = 500,000 → lọc thêm có SĐT → xuất ra file → phân công cho từng sales. Mỗi sales phụ trách một nhóm sản phẩm (VD: người A lo Hosting, người B lo Gsuite/Email).</div>
+        <div class="step-tags"><span class="stag stag-r">Mỗi sáng</span><span class="stag stag-b">Tab: Telesales</span></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:#fee2e2;color:#991b1b">2</div>
+      <div class="step-body">
+        <div class="step-title">Gọi điện theo script phù hợp từng sản phẩm</div>
+        <div class="step-desc">
+          <strong>Hosting (CR 35%):</strong> Hỏi về nhu cầu kỹ thuật, đề xuất gói phù hợp, so sánh vs gói đang dùng.<br>
+          <strong>Gsuite (CR 28%):</strong> Hỏi số lượng user, offer trial 14 ngày, đề xuất thanh toán theo năm có chiết khấu.<br>
+          <strong>Domain (CR 68.9%):</strong> Nhắc nhở ngắn gọn, offer bundle Whois Protection miễn phí 1 năm nếu thanh toán hôm nay.
+        </div>
+        <div class="step-tags"><span class="stag stag-r">Trong ngày</span><span class="stag stag-g">Script theo sản phẩm</span></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:#fee2e2;color:#991b1b">3</div>
+      <div class="step-body">
+        <div class="step-title">10h–12h và 14h–16h: Khung giờ vàng để gọi</div>
+        <div class="step-desc">Đây là 2 khung giờ có volume giỏ hàng cao nhất (10h: 1,762 giỏ; 15h: 1,580 giỏ). Đặt lịch gọi tập trung trong khung này, tắt các cuộc họp nội bộ không cần thiết.</div>
+        <div class="step-tags"><span class="stag stag-a">10h–12h</span><span class="stag stag-a">14h–16h</span></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:#fee2e2;color:#991b1b">4</div>
+      <div class="step-body">
+        <div class="step-title">Cuối ngày: Báo cáo & cập nhật CRM</div>
+        <div class="step-desc">Ghi lại: đã gọi bao nhiêu số, chuyển đổi được bao nhiêu, lý do khách từ chối phổ biến nhất hôm nay là gì. Dữ liệu này giúp cải thiện script và chiến lược tuần sau.</div>
+        <div class="step-tags"><span class="stag stag-b">Cuối ngày</span></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:#fee2e2;color:#991b1b">5</div>
+      <div class="step-body">
+        <div class="step-title">Thứ 2 hàng tuần: Review nhóm "Thường xuyên bỏ giỏ"</div>
+        <div class="step-desc">Tab <strong>Phân khúc KH</strong> → lọc "Thường xuyên (4-10 lần)" → xem user nào bỏ giỏ nhiều nhất tuần qua → ưu tiên gọi điện nhóm này. CR nhóm này chỉ 54.2% — cải thiện được 10% là thêm ~300 đơn/tháng.</div>
+        <div class="step-tags"><span class="stag stag-b">Thứ 2 hàng tuần</span><span class="stag stag-g">Tiềm năng cao</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- S6: ACTION PLAN MARKETING -->
+<div class="section" id="s6">
+  <div class="section-header">
+    <div class="section-num">06</div>
+    <div>
+      <h2>Action plan Marketing — chiến dịch cần triển khai</h2>
+      <div class="section-sub"><span class="role role-m">Marketing</span> 4 chiến dịch ưu tiên theo thứ tự ROI</div>
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num" style="background:#d1fae5;color:#065f46">A</div>
+      <div class="step-body">
+        <div class="step-title">Abandoned cart email — 3 email × 7,044 giỏ bỏ</div>
+        <div class="step-desc">
+          <strong>Email 1 — sau 1h:</strong> "Bạn có quên gì trong giỏ không?" — nhắc nhở đơn giản, hiển thị ảnh sản phẩm và giá, nút CTA lớn.<br>
+          <strong>Email 2 — sau 24h:</strong> "Khách hàng X đã dùng sản phẩm này như thế nào" — social proof, review 5 sao, FAQ phổ biến.<br>
+          <strong>Email 3 — sau 72h:</strong> "[Tên] — ưu đãi cuối cùng cho bạn" — discount 5-10% hoặc tặng thêm 1 tháng (chỉ với Hosting/Email, không áp dụng Domain để tránh phá giá).<br><br>
+          Lấy danh sách email từ tab <strong>Contact Recovery</strong>, lọc trạng thái "Bỏ giỏ".
+        </div>
+        <div class="step-tags"><span class="stag stag-r">Làm tuần này</span><span class="stag stag-g">ROI cao nhất</span><span class="stag stag-b">Tab: Contact Recovery</span></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:#d1fae5;color:#065f46">B</div>
+      <div class="step-body">
+        <div class="step-title">Remarketing khách vãng lai — 719 Gmail + cookie audiences</div>
+        <div class="step-desc">
+          Vào tab <strong>Khách vãng lai</strong> → xuất danh sách Gmail (719 địa chỉ) → upload vào Google Ads Customer Match → chạy remarketing với thông điệp "Bạn đã xem [tên miền] — đăng ký ngay hôm nay".<br><br>
+          Song song: đảm bảo Facebook Pixel và Google Ads remarketing tag đã được gắn đúng trên trang giỏ hàng để capture 5,921 khách vãng lai qua cookie.
+        </div>
+        <div class="step-tags"><span class="stag stag-r">Tuần này</span><span class="stag stag-b">Tab: Khách vãng lai</span><span class="stag stag-g">719 Gmail sẵn có</span></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:#d1fae5;color:#065f46">C</div>
+      <div class="step-body">
+        <div class="step-title">Cải thiện trang checkout — mục tiêu giảm bỏ giỏ trong 30s</div>
+        <div class="step-desc">
+          50% người bỏ giỏ thoát trong vòng 30 giây đầu — đây là friction UX, không phải vấn đề giá. Cần làm ngay:<br>
+          • Thêm <strong>badge bảo mật SSL + thanh toán an toàn</strong> ở gần nút checkout<br>
+          • Hiển thị <strong>"X người đang xem sản phẩm này"</strong><br>
+          • Thêm live chat bubble với lời chào chủ động sau 30 giây<br>
+          • Với Hosting: hiển thị <strong>giá/tháng</strong> thay vì chỉ giá/năm<br>
+          • Đảm bảo trang load dưới 2 giây trên mobile
+        </div>
+        <div class="step-tags"><span class="stag stag-a">2-3 tuần</span><span class="stag stag-b">UX/Dev phối hợp</span><span class="stag stag-g">Ảnh hưởng toàn bộ CR</span></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:#d1fae5;color:#065f46">D</div>
+      <div class="step-body">
+        <div class="step-title">Loyalty program cho nhóm "Thường xuyên" — 3,034 giỏ bị bỏ</div>
+        <div class="step-desc">
+          Nhóm 4-10 lần mua đang chờ deal tốt hơn. Cần làm:<br>
+          • Hiển thị <strong>điểm tích lũy</strong> trong trang giỏ hàng ("Bạn có X điểm — đổi được Y% giảm giá")<br>
+          • Badge <strong>"Khách hàng thân thiết"</strong> ở header khi đăng nhập<br>
+          • Email riêng hàng tháng với ưu đãi gia hạn sớm trước 30 ngày hết hạn<br>
+          • Tặng tháng miễn phí nếu gia hạn 2 năm (Hosting/Email)
+        </div>
+        <div class="step-tags"><span class="stag stag-a">1 tháng</span><span class="stag stag-b">CRM + Dev</span><span class="stag stag-g">CR +10-15%</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout green">
+    <div class="callout-icon">📧</div>
+    <div class="callout-body">
+      <div class="callout-title">Kênh Email Marketing đang có CR 100% — cần tăng quy mô</div>
+      <div class="callout-text">Hiện chỉ có 4 sự kiện từ Email Marketing nhưng CR đạt 100% — tất cả đều chuyển đổi. Đây là kênh hiệu quả nhất. Cần tăng volume: đưa toàn bộ danh sách bỏ giỏ vào email automation thay vì chỉ gửi thủ công.</div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- S7: THỜI ĐIỂM VÀNG -->
+<div class="section" id="s7">
+  <div class="section-header">
+    <div class="section-num">07</div>
+    <div>
+      <h2>Thời điểm vàng & lịch hành động tuần</h2>
+      <div class="section-sub">Phân bổ công việc theo giờ và ngày tối ưu nhất</div>
+    </div>
+  </div>
+
+  <div class="metric-grid g3" style="margin-bottom:20px">
+    <div class="mc">
+      <div class="mc-val" style="color:#057a55">10h–12h</div>
+      <div class="mc-lbl">Khung giờ vàng buổi sáng</div>
+      <div class="mc-sub">Volume cao nhất: 1,762 giỏ lúc 10h. CR 12h đạt 68.8%</div>
+    </div>
+    <div class="mc">
+      <div class="mc-val" style="color:#057a55">14h–16h</div>
+      <div class="mc-lbl">Khung giờ vàng buổi chiều</div>
+      <div class="mc-sub">Volume 14h: 1,569 giỏ. CR 14h đạt 64.9%</div>
+    </div>
+    <div class="mc">
+      <div class="mc-val" style="color:#c81e1e">16h–18h</div>
+      <div class="mc-lbl">Khung giờ CR thấp nhất</div>
+      <div class="mc-sub">CR 16h chỉ 58.2% dù volume rất cao. Cần thêm support</div>
+    </div>
+  </div>
+
+  <div class="tbl-wrap">
+    <table class="data-tbl">
+      <thead><tr><th>Thứ</th><th>Nhiệm vụ Sales</th><th>Nhiệm vụ Marketing</th><th>Ghi chú</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="bold">Thứ 2</td>
+          <td>Review danh sách cuối tuần. Gọi nhóm "Thường xuyên" bỏ giỏ</td>
+          <td>Gửi email đợt 1 cho giỏ bỏ tuần trước (>72h)</td>
+          <td>Volume thấp hơn cuối tuần</td>
+        </tr>
+        <tr>
+          <td class="bold">Thứ 3</td>
+          <td>Gọi danh sách Hosting + Gsuite</td>
+          <td>Check performance email tuần trước. A/B test tiêu đề email</td>
+          <td>CR Thứ 3 tốt: 63.2%</td>
+        </tr>
+        <tr>
+          <td class="bold">Thứ 4</td>
+          <td>Follow-up cuộc gọi hôm qua chưa chốt</td>
+          <td>Cập nhật remarketing audiences từ XLSX mới nhất</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td class="bold" style="color:#057a55">Thứ 5 ⭐</td>
+          <td>Đẩy mạnh — ngày volume và CR cao nhất tuần</td>
+          <td>Chạy campaign ads ngân sách cao nhất ngày Thứ 5</td>
+          <td>Volume 3,345 / CR 64%</td>
+        </tr>
+        <tr>
+          <td class="bold" style="color:#057a55">Thứ 6 ⭐</td>
+          <td>Chốt đơn cuối tuần — nhiều người muốn xong việc trước weekend</td>
+          <td>Gửi email "deal cuối tuần" cho danh sách bỏ giỏ trong tuần</td>
+          <td>Volume 3,341 / CR 64%</td>
+        </tr>
+        <tr>
+          <td class="bold">Thứ 7</td>
+          <td>Gọi nhẹ — chỉ đơn trên 2 triệu</td>
+          <td>Phân tích dashboard tuần. Lập kế hoạch tuần sau</td>
+          <td>Volume giảm 30%</td>
+        </tr>
+        <tr>
+          <td class="bold">Chủ nhật</td>
+          <td>Không gọi điện</td>
+          <td>Lên lịch email automation tuần sau</td>
+          <td>CR thấp nhất: ~61%</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout blue">
+    <div class="callout-icon">📅</div>
+    <div class="callout-body">
+      <div class="callout-title">Gửi email nhắc nhở vào 9h và 14h — không phải giờ làm việc bình thường</div>
+      <div class="callout-text">Dữ liệu cho thấy người dùng check email và vào giỏ hàng nhiều nhất lúc <strong>10h và 15h</strong>. Đặt lịch gửi email automation vào <strong>9h30</strong> (để đến tay lúc 10h) và <strong>13h30</strong> (đến lúc 14h) — thay vì gửi lúc 8h hoặc 17h như thông thường.</div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- S8: KPI -->
+<div class="section" id="s8">
+  <div class="section-header">
+    <div class="section-num">08</div>
+    <div>
+      <h2>KPI theo dõi & mốc thành công</h2>
+      <div class="section-sub">Đo lường đúng để biết mình đang đi đúng hướng</div>
+    </div>
+  </div>
+
+  <div class="tbl-wrap">
+    <table class="data-tbl">
+      <thead><tr><th>KPI</th><th>Hiện tại</th><th>Mục tiêu tháng 1</th><th>Mục tiêu tháng 3</th><th>Ai theo dõi</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="bold">CR tổng thể</td>
+          <td>62.8%</td>
+          <td style="color:#057a55">65%</td>
+          <td style="color:#057a55">70%</td>
+          <td><span class="role role-b">Lead</span></td>
+        </tr>
+        <tr>
+          <td class="bold">CR Hosting</td>
+          <td>35.0%</td>
+          <td style="color:#057a55">40%</td>
+          <td style="color:#057a55">50%</td>
+          <td><span class="role role-s">Sales</span></td>
+        </tr>
+        <tr>
+          <td class="bold">CR Gsuite</td>
+          <td>28.1%</td>
+          <td style="color:#057a55">35%</td>
+          <td style="color:#057a55">45%</td>
+          <td><span class="role role-s">Sales</span></td>
+        </tr>
+        <tr>
+          <td class="bold">Email abandoned open rate</td>
+          <td>Chưa đo</td>
+          <td style="color:#057a55">&gt;30%</td>
+          <td style="color:#057a55">&gt;40%</td>
+          <td><span class="role role-m">Marketing</span></td>
+        </tr>
+        <tr>
+          <td class="bold">Email abandoned CR</td>
+          <td>Chưa đo</td>
+          <td style="color:#057a55">&gt;5%</td>
+          <td style="color:#057a55">&gt;10%</td>
+          <td><span class="role role-m">Marketing</span></td>
+        </tr>
+        <tr>
+          <td class="bold">Đơn "Chưa TT" xử lý</td>
+          <td>174 đơn tồn đọng</td>
+          <td style="color:#057a55">0 đơn tồn &gt;24h</td>
+          <td style="color:#057a55">0 đơn tồn &gt;4h</td>
+          <td><span class="role role-s">Sales</span></td>
+        </tr>
+        <tr>
+          <td class="bold">Số cuộc gọi telesales/ngày</td>
+          <td>Chưa đo</td>
+          <td style="color:#057a55">20 cuộc/người/ngày</td>
+          <td style="color:#057a55">30 cuộc/người/ngày</td>
+          <td><span class="role role-s">Sales</span></td>
+        </tr>
+        <tr>
+          <td class="bold">Revenue recover / tháng</td>
+          <td>0</td>
+          <td style="color:#057a55">+150M VND</td>
+          <td style="color:#057a55">+306M VND</td>
+          <td><span class="role role-b">Lead</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout green">
+    <div class="callout-icon">✅</div>
+    <div class="callout-body">
+      <div class="callout-title">Checklist hàng tuần — review vào sáng Thứ 2</div>
+      <div class="callout-text">
+        <ul class="checklist" style="margin-top:8px">
+          <li><span class="check-box"></span>CR tuần này so với tuần trước tăng hay giảm? Lý do?</li>
+          <li><span class="check-box"></span>Sản phẩm nào đột ngột có CR giảm hơn 10%? Báo kỹ thuật kiểm tra</li>
+          <li><span class="check-box"></span>Danh sách đơn "Chưa thanh toán" đã được xử lý hết chưa?</li>
+          <li><span class="check-box"></span>Email abandoned đã được gửi đúng lịch chưa? Tỷ lệ mở là bao nhiêu?</li>
+          <li><span class="check-box"></span>Nhóm "Thường xuyên bỏ giỏ" tuần này có tăng không?</li>
+          <li><span class="check-box"></span>Kênh Google vs SEO — kênh nào đang hiệu quả hơn tuần này?</li>
+          <li><span class="check-box"></span>Có user nào bỏ giỏ Hosting/Gsuite trên 5 triệu cần Sales gọi không?</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div style="background:var(--ink);color:#fff;border-radius:14px;padding:28px 32px;margin-top:24px">
+    <div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:12px;font-family:var(--mo)">Mục tiêu cốt lõi</div>
+    <div style="font-size:20px;font-weight:700;margin-bottom:8px">Từ 62.8% → 70% CR trong 3 tháng</div>
+    <div style="font-size:14px;color:rgba(255,255,255,.6);line-height:1.7">Tăng 7.2% CR tương đương thêm ~1,365 đơn/tháng. Với AOV trung bình 320k đồng → thêm <strong style="color:#fff">~437M VND doanh thu</strong> mỗi tháng mà không cần tăng traffic.</div>
+    <div style="display:flex;gap:20px;margin-top:20px;flex-wrap:wrap">
+      <div><div style="font-size:22px;font-weight:700;font-family:var(--mo)">437M</div><div style="font-size:11px;color:rgba(255,255,255,.4)">VND/tháng thêm</div></div>
+      <div style="width:1px;background:rgba(255,255,255,.1)"></div>
+      <div><div style="font-size:22px;font-weight:700;font-family:var(--mo)">5.2 tỷ</div><div style="font-size:11px;color:rgba(255,255,255,.4)">VND/năm thêm</div></div>
+      <div style="width:1px;background:rgba(255,255,255,.1)"></div>
+      <div><div style="font-size:22px;font-weight:700;font-family:var(--mo)">3 tháng</div><div style="font-size:11px;color:rgba(255,255,255,.4)">Để đạt mục tiêu</div></div>
+    </div>
+  </div>
+</div>
+
+<div style="text-align:center;padding:40px 0;font-size:12px;color:var(--ink3);font-family:var(--mo)">
+  Tài liệu nội bộ · Dựa trên dữ liệu 26/3 – 25/4/2026 · Cập nhật khi có data mới
+</div>
+
+</div>
+</body>
+</html>
