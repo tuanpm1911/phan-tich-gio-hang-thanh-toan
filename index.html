@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cart Conversion Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;500;600&display=swap');
+:root{
+  --bg:#0d0f14;--sur:#13161d;--sur2:#1a1e28;
+  --bd:rgba(255,255,255,.07);--bd2:rgba(255,255,255,.12);
+  --tx:#e8eaf0;--mu:#6b7280;
+  --bl:#4f8ef7;--gr:#22c97a;--rd:#f04f4f;--am:#f5a623;--pu:#7c5cbf;--te:#5dcaa5;
+  --fn:'Sora',sans-serif;--mo:'DM Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--fn);background:var(--bg);color:var(--tx);min-height:100vh;font-size:14px;line-height:1.6}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:2px}
+
+/* HEADER */
+header{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;border-bottom:.5px solid var(--bd);position:sticky;top:0;z-index:100;background:rgba(13,15,20,.96);backdrop-filter:blur(12px)}
+.logo{font-size:11px;font-weight:500;color:var(--mu);font-family:var(--mo);letter-spacing:.07em}
+.logo b{color:var(--bl)}
+#fi{font-size:11px;font-family:var(--mo);color:var(--mu)}
+.rbtn{padding:5px 12px;background:transparent;border:.5px solid var(--bd2);color:var(--mu);border-radius:6px;font-family:var(--fn);font-size:11px;cursor:pointer;transition:all .15s}
+.rbtn:hover{color:var(--tx);border-color:var(--bl)}
+
+/* UPLOAD */
+#up{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - 53px);padding:32px;gap:14px}
+.dz{border:1.5px dashed var(--bd2);border-radius:18px;padding:52px 72px;text-align:center;cursor:pointer;transition:all .2s;max-width:480px;width:100%;background:var(--sur)}
+.dz:hover,.dz.drag{border-color:var(--bl);background:rgba(79,142,247,.04)}
+.uico{width:48px;height:48px;border-radius:12px;background:rgba(79,142,247,.12);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:22px}
+.utit{font-size:17px;font-weight:600;margin-bottom:6px}
+.usub{font-size:12px;color:var(--mu);margin-bottom:20px;line-height:1.7}
+.ulbl{display:inline-block;padding:9px 22px;background:var(--bl);color:#fff;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer}
+#finp{display:none}
+.rbox{max-width:480px;width:100%;background:var(--sur);border:.5px solid var(--bd);border-radius:13px;padding:14px 18px}
+.rtit{font-size:11px;font-weight:500;color:var(--tx);margin-bottom:8px;font-family:var(--mo)}
+.ct{display:inline-block;font-family:var(--mo);font-size:10px;padding:2px 7px;border-radius:4px;background:rgba(79,142,247,.12);color:var(--bl);margin:2px 2px 2px 0}
+.ct.o{background:rgba(255,255,255,.05);color:var(--mu)}
+
+/* LOADING */
+#ld{display:none;position:fixed;inset:0;background:rgba(13,15,20,.88);backdrop-filter:blur(8px);z-index:999;align-items:center;justify-content:center;flex-direction:column;gap:12px}
+.sp{width:32px;height:32px;border:2px solid var(--bd2);border-top-color:var(--bl);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ltx{font-size:11px;color:var(--mu);font-family:var(--mo)}
+
+/* DASHBOARD */
+#db{display:none;padding:20px 24px 60px;max-width:1320px;margin:0 auto}
+#err{background:rgba(240,79,79,.1);border:.5px solid rgba(240,79,79,.3);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--rd);margin-bottom:12px;display:none}
+
+/* KPI */
+.kg{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:20px}
+.kc{background:var(--sur);border:.5px solid var(--bd);border-radius:12px;padding:14px 16px}
+.kl{font-size:9px;color:var(--mu);font-family:var(--mo);letter-spacing:.05em;margin-bottom:5px;text-transform:uppercase}
+.kv{font-size:22px;font-weight:600;line-height:1}
+.ks{font-size:10px;color:var(--mu);margin-top:3px}
+
+/* TABS */
+.tb{display:flex;gap:2px;background:var(--sur);border:.5px solid var(--bd);border-radius:9px;padding:3px;margin-bottom:18px;width:fit-content;flex-wrap:wrap}
+.tbtn{padding:5px 13px;border:none;background:transparent;color:var(--mu);font-family:var(--fn);font-size:11px;font-weight:500;border-radius:6px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.tbtn.on{background:var(--sur2);color:var(--tx)}
+.tp{display:none}
+.tp.on{display:block}
+
+/* CARDS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+.cc{background:var(--sur);border:.5px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:12px}
+.cc.nm{margin-bottom:0}
+.ct2{font-size:9px;font-weight:500;color:var(--mu);font-family:var(--mo);letter-spacing:.05em;text-transform:uppercase;margin-bottom:12px}
+.cw{position:relative;width:100%}
+
+/* H-BARS */
+.hb{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+.hl{font-size:10px;color:var(--mu);width:110px;flex-shrink:0;text-align:right;font-family:var(--mo);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ht{flex:1;height:6px;background:var(--sur2);border-radius:3px;overflow:hidden}
+.hf{height:100%;border-radius:3px}
+.hv{font-size:10px;color:var(--tx);width:48px;flex-shrink:0;font-family:var(--mo)}
+.hv2{font-size:10px;color:var(--mu);width:42px;flex-shrink:0;font-family:var(--mo);text-align:right}
+
+/* STAT */
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.sb{background:var(--sur2);border-radius:9px;padding:11px 13px;text-align:center}
+.sv{font-size:16px;font-weight:600;color:var(--bl)}
+.sl{font-size:9px;color:var(--mu);margin-top:2px;font-family:var(--mo)}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;font-size:11px}
+.tbl th{font-size:9px;font-weight:500;color:var(--mu);text-transform:uppercase;letter-spacing:.04em;padding:6px 10px;text-align:left;border-bottom:.5px solid var(--bd)}
+.tbl td{padding:7px 10px;border-bottom:.5px solid var(--bd);color:var(--mu);vertical-align:middle}
+.tbl td:first-child{color:var(--tx);font-family:var(--mo);font-size:10px}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:rgba(255,255,255,.02)}
+
+/* ACTION */
+.al{display:flex;flex-direction:column;gap:10px}
+.ai{background:var(--sur);border:.5px solid var(--bd);border-radius:12px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start}
+.an{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;font-family:var(--mo)}
+.at{font-size:12px;font-weight:600;margin-bottom:3px}
+.ad{font-size:11px;color:var(--mu);line-height:1.6}
+.ats{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
+.tag{font-size:9px;padding:2px 7px;border-radius:20px;font-family:var(--mo)}
+.tr{background:rgba(240,79,79,.15);color:var(--rd)}
+.tg{background:rgba(34,201,122,.15);color:var(--gr)}
+.tb2{background:rgba(79,142,247,.15);color:var(--bl)}
+.ta{background:rgba(245,166,35,.15);color:var(--am)}
+.tp2{background:rgba(124,92,191,.15);color:var(--pu)}
+
+/* PILLS */
+.pills{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.pill{font-size:10px;padding:3px 10px;border-radius:20px;border:.5px solid var(--bd2);color:var(--mu)}
+.pill.hot{border-color:rgba(240,79,79,.4);color:var(--rd);background:rgba(240,79,79,.06)}
+.pill.good{border-color:rgba(34,201,122,.4);color:var(--gr);background:rgba(34,201,122,.06)}
+.pill.warn{border-color:rgba(245,166,35,.4);color:var(--am);background:rgba(245,166,35,.06)}
+.pill.info{border-color:rgba(79,142,247,.4);color:var(--bl);background:rgba(79,142,247,.06)}
+
+/* USER TABLE */
+#ut-wrap{max-height:420px;overflow-y:auto;border-radius:8px;border:.5px solid var(--bd)}
+.uba{font-size:9px;font-family:var(--mo);padding:2px 7px;border-radius:10px;cursor:pointer;border:.5px solid var(--bd)}
+.uba:hover{background:var(--sur2)}
+
+/* FILTER ROW */
+.frow{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.finput{background:var(--sur2);border:.5px solid var(--bd2);color:var(--tx);font-family:var(--mo);font-size:11px;padding:5px 10px;border-radius:6px;outline:none}
+.finput:focus{border-color:var(--bl)}
+select.finput option{background:var(--sur2)}
+.flab{font-size:10px;color:var(--mu);font-family:var(--mo)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">CART <b>CONVERSION</b> DASHBOARD</div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span id="fi">Chua co file</span>
+    <button class="rbtn" onclick="resetDash()">&#8593; File khac</button>
+  </div>
+</header>
+
+<!-- UPLOAD -->
+<div id="up">
+  <div class="dz" id="dz"
+    ondragover="event.preventDefault();this.classList.add('drag')"
+    ondragleave="this.classList.remove('drag')"
+    ondrop="onDrop(event)">
+    <div class="uico">&#128202;</div>
+    <div class="utit">Keo tha file CSV vao day</div>
+    <div class="usub">hoac nhan de chon file.<br>Dashboard tu dong phan tich toan bo.</div>
+    <label class="ulbl" for="finp">Chon file CSV</label>
+    <input type="file" id="finp" accept=".csv" onchange="onFI(this)">
+  </div>
+  <div class="rbox">
+    <div class="rtit">Cot bat buoc</div>
+    <span class="ct">flg_success</span><span class="ct">revenue</span><span class="ct">product_type_name</span>
+    <span class="ct">timein_carlist</span><span class="ct">login_id</span><span class="ct">tracking_cart_id</span>
+    <div style="margin-top:8px;margin-bottom:4px;font-size:9px;color:var(--mu);font-family:var(--mo)">Tuy chon:</div>
+    <span class="ct o">channel</span><span class="ct o">timein_success</span><span class="ct o">timeout_carlist</span>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div id="ld">
+  <div class="sp"></div>
+  <div class="ltx" id="ltx">Dang doc file...</div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="db">
+  <div id="err"></div>
+
+  <!-- KPI -->
+  <div class="kg">
+    <div class="kc"><div class="kl">Tong su kien</div><div class="kv" style="color:var(--bl)" id="k1">-</div><div class="ks" id="k1s">-</div></div>
+    <div class="kc"><div class="kl">Da thanh toan</div><div class="kv" style="color:var(--gr)" id="k2">-</div><div class="ks">flg_success=1</div></div>
+    <div class="kc"><div class="kl">Bo gio hang</div><div class="kv" style="color:var(--rd)" id="k3">-</div><div class="ks">flg_success=0</div></div>
+    <div class="kc"><div class="kl">Ty le chuyen doi</div><div class="kv" style="color:var(--am)" id="k4">-</div><div class="ks" id="k4s">Overall CR</div></div>
+    <div class="kc"><div class="kl">Doanh thu bo lo</div><div class="kv" style="color:var(--rd)" id="k5">-</div><div class="ks" id="k5s">-</div></div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tb">
+    <button class="tbtn on" onclick="goTab('trend',this)">Xu huong</button>
+    <button class="tbtn" onclick="goTab('product',this)">San pham</button>
+    <button class="tbtn" onclick="goTab('channel',this)">Kenh</button>
+    <button class="tbtn" onclick="goTab('hour',this)">Gio &amp; Ngay</button>
+    <button class="tbtn" onclick="goTab('revenue',this)">Gia tri don</button>
+    <button class="tbtn" onclick="goTab('user',this)">Phan khuc KH</button>
+    <button class="tbtn" onclick="goTab('cart',this)">Gio hang</button>
+    <button class="tbtn" onclick="goTab('telesales',this)">Telesales list</button>
+    <button class="tbtn" onclick="goTab('action',this)">Action plan</button>
+  </div>
+
+  <!-- TAB: TREND -->
+  <div id="tp-trend" class="tp on">
+    <div class="cc"><div class="ct2">Xu huong chuyen doi theo ngay</div><div class="cw" style="height:260px"><canvas id="c-trend"></canvas></div></div>
+    <div class="g3">
+      <div class="cc nm"><div class="ct2">Top 5 ngay CR cao</div><div id="best-days"></div></div>
+      <div class="cc nm"><div class="ct2">Top 5 ngay CR thap</div><div id="worst-days"></div></div>
+      <div class="cc nm"><div class="ct2">CR theo thu trong tuan</div><div class="cw" style="height:140px"><canvas id="c-dow"></canvas></div></div>
+    </div>
+  </div>
+
+  <!-- TAB: PRODUCT -->
+  <div id="tp-product" class="tp">
+    <div class="g2">
+      <div class="cc nm"><div class="ct2">CR theo san pham (%)</div><div id="prod-cr"></div></div>
+      <div class="cc nm"><div class="ct2">Doanh thu bo lo theo san pham</div><div id="prod-rev"></div></div>
+    </div>
+    <div class="cc" style="margin-top:12px"><div class="ct2">Ma tran uu tien — X: doanh thu bo lo, Y: CR%, kich co = volume</div><div class="cw" style="height:280px"><canvas id="c-bubble"></canvas></div></div>
+  </div>
+
+  <!-- TAB: CHANNEL -->
+  <div id="tp-channel" class="tp">
+    <div class="g2">
+      <div class="cc nm"><div class="ct2">CR theo kenh</div><div class="cw" style="height:200px"><canvas id="c-ch-cr"></canvas></div></div>
+      <div class="cc nm"><div class="ct2">Volume theo kenh</div><div class="cw" style="height:200px"><canvas id="c-ch-vol"></canvas></div></div>
+    </div>
+    <div class="cc" style="margin-top:12px"><div class="ct2">Chi tiet tung kenh</div><div id="ch-det"></div></div>
+  </div>
+
+  <!-- TAB: HOUR -->
+  <div id="tp-hour" class="tp">
+    <div class="cc"><div class="ct2">Volume theo gio trong ngay</div><div class="cw" style="height:200px"><canvas id="c-hv"></canvas></div></div>
+    <div class="cc"><div class="ct2">CR theo gio trong ngay</div><div class="cw" style="height:160px"><canvas id="c-hcr"></canvas></div></div>
+    <div class="pills" id="h-pills"></div>
+  </div>
+
+  <!-- TAB: REVENUE -->
+  <div id="tp-revenue" class="tp">
+    <div class="g2">
+      <div class="cc nm"><div class="ct2">CR theo nhom gia tri don</div><div class="cw" style="height:200px"><canvas id="c-rcr"></canvas></div></div>
+      <div class="cc nm"><div class="ct2">Tiem nang phuc hoi (recover 5%/10%)</div><div class="cw" style="height:200px"><canvas id="c-rrec"></canvas></div></div>
+    </div>
+    <div class="cc" style="margin-top:12px"><div class="ct2">Thoi gian tu vao gio den thanh toan</div><div id="time-st"></div></div>
+  </div>
+
+  <!-- TAB: USER SEGMENT -->
+  <div id="tp-user" class="tp">
+    <div class="g2">
+      <div class="cc nm"><div class="ct2">CR theo tan suat mua (so lan vao gio)</div><div class="cw" style="height:200px"><canvas id="c-scr"></canvas></div></div>
+      <div class="cc nm"><div class="ct2">Gio bi bo theo phan khuc</div><div class="cw" style="height:200px"><canvas id="c-sab"></canvas></div></div>
+    </div>
+    <div class="cc" style="margin-top:12px">
+      <div class="ct2">Phan tich chi tiet tung phan khuc</div>
+      <div id="seg-det"></div>
+    </div>
+    <div class="cc" style="margin-top:12px">
+      <div class="ct2">User co revenue bi bo lo lon nhat</div>
+      <div class="frow" style="margin-bottom:8px">
+        <span class="flab">Min revenue bo lo:</span>
+        <input class="finput" type="number" id="minrev" placeholder="0" style="width:100px" oninput="renderUserRevTable()">
+        <span class="flab">Phan khuc:</span>
+        <select class="finput" id="segfil" onchange="renderUserRevTable()">
+          <option value="">Tat ca</option>
+          <option value="Moi">Moi (1 lan)</option>
+          <option value="Thinh">Thinh thoang (2-3)</option>
+          <option value="Thuong">Thuong xuyen (4-10)</option>
+          <option value="Power">Power (10+)</option>
+        </select>
+      </div>
+      <div id="urv-wrap"></div>
+    </div>
+  </div>
+
+  <!-- TAB: CART ANALYSIS -->
+  <div id="tp-cart" class="tp">
+    <div class="g2">
+      <div class="cc nm"><div class="ct2">CR theo so san pham trong gio</div><div class="cw" style="height:200px"><canvas id="c-cart-cr"></canvas></div></div>
+      <div class="cc nm"><div class="ct2">Volume theo so san pham trong gio</div><div class="cw" style="height:200px"><canvas id="c-cart-vol"></canvas></div></div>
+    </div>
+    <div class="cc" style="margin-top:12px">
+      <div class="ct2">Cap san pham hay di cung nhau (top combo)</div>
+      <div id="combo-det"></div>
+    </div>
+    <div class="cc" style="margin-top:12px">
+      <div class="ct2">User co nhieu san pham trong gio (cross-sell opportunity)</div>
+      <div id="cross-det"></div>
+    </div>
+  </div>
+
+  <!-- TAB: TELESALES -->
+  <div id="tp-telesales" class="tp">
+    <div class="g4" id="ts-kpi"></div>
+    <div class="cc">
+      <div class="ct2">Danh sach uu tien telesales — user co revenue bi bo lo lon + co intent</div>
+      <div class="frow">
+        <span class="flab">Tim user:</span>
+        <input class="finput" id="ts-search" placeholder="login_id..." style="width:150px" oninput="renderTSTable()">
+        <span class="flab">Min revenue bo lo:</span>
+        <input class="finput" type="number" id="ts-minrev" placeholder="1000000" style="width:110px" value="1000000" oninput="renderTSTable()">
+        <span class="flab">Hien:</span>
+        <input class="finput" type="number" id="ts-limit" value="50" style="width:60px" oninput="renderTSTable()">
+        <span class="flab">dong</span>
+      </div>
+      <div id="ts-wrap"></div>
+      <div style="margin-top:8px;font-size:10px;color:var(--mu)" id="ts-count"></div>
+    </div>
+    <div class="cc" style="margin-top:12px">
+      <div class="ct2">Phan bo doanh thu bi bo lo theo nhom user</div>
+      <div class="cw" style="height:220px"><canvas id="c-ts-rev"></canvas></div>
+    </div>
+  </div>
+
+  <!-- TAB: ACTION -->
+  <div id="tp-action" class="tp">
+    <div class="al" id="act-list"></div>
+  </div>
+</div>
+
+<script>
+/* ── STATE ── */
+var CH={}, ROWS=[], UMAP={};
+var PAL=['#4f8ef7','#22c97a','#f5a623','#7c5cbf','#f04f4f','#5dcaa5','#f093fb','#43e97b','#fa8231','#a29bfe'];
+
+/* ── FILE ── */
+function onDrop(e){e.preventDefault();document.getElementById('dz').classList.remove('drag');var f=e.dataTransfer.files[0];if(f)loadF(f);}
+function onFI(i){if(i.files[0])loadF(i.files[0]);}
+function loadF(file){
+  setLd(true,'Dang doc file...');
+  document.getElementById('fi').textContent=file.name+' - '+(file.size/1024).toFixed(0)+' KB';
+  Papa.parse(file,{header:true,skipEmptyLines:true,
+    complete:function(r){setLd(true,'Dang phan tich...');setTimeout(function(){try{process(r.data);}catch(e){setLd(false);showErr('Loi: '+e.message);console.error(e);}},60);},
+    error:function(e){setLd(false);showErr('Khong doc duoc: '+e.message);}
+  });
+}
+function resetDash(){killCh();ROWS=[];UMAP={};document.getElementById('db').style.display='none';document.getElementById('up').style.display='flex';document.getElementById('fi').textContent='Chua co file';document.getElementById('finp').value='';document.getElementById('err').style.display='none';}
+function setLd(on,t){document.getElementById('ld').style.display=on?'flex':'none';if(t)document.getElementById('ltx').textContent=t;}
+function showErr(m){var e=document.getElementById('err');e.textContent='LOI: '+m;e.style.display='block';}
+function killCh(){Object.keys(CH).forEach(function(k){try{CH[k].destroy();}catch(e){}});CH={};}
+
+/* ── UTILS ── */
+function fN(n){if(n>=1e9)return(n/1e9).toFixed(1)+' ty';if(n>=1e6)return(n/1e6).toFixed(0)+' tr';if(n>=1e3)return(n/1e3).toFixed(0)+'k';return Math.round(n)+'';}
+function fNd(n){if(n>=1e9)return(n/1e9).toFixed(2)+' ty';if(n>=1e6)return(n/1e6).toFixed(1)+' tr';if(n>=1e3)return(n/1e3).toFixed(0)+'k';return Math.round(n)+'';}
+function pdate(s){return(s&&s.trim())?new Date(s):null;}
+function crC(c){return c>=65?'#22c97a':c>=45?'#f5a623':'#f04f4f';}
+function setEl(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
+function setHtml(id,v){var e=document.getElementById(id);if(e)e.innerHTML=v;}
+function mkC(id,cfg){var el=document.getElementById(id);if(!el)return;if(CH[id]){try{CH[id].destroy();}catch(e){}}CH[id]=new Chart(el,cfg);}
+function gridOpts(stacked){return{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{stacked:!!stacked,ticks:{font:{size:9},color:'#6b7280',maxTicksLimit:18,maxRotation:45},grid:{color:'rgba(255,255,255,.04)'}},y:{stacked:!!stacked,ticks:{font:{size:9},color:'#6b7280',callback:function(v){return v>=1000?(v/1000).toFixed(0)+'k':v;}},grid:{color:'rgba(255,255,255,.04)'}}}};}
+function mkBars(items,lblFn,valFn,maxV,dispFn,colFn,defC){
+  var out='';
+  items.forEach(function(x){
+    var col=colFn?colFn(x):(defC||'#4f8ef7');
+    var w=Math.min(100,Math.max(0,(maxV>0?valFn(x)/maxV*100:0)));
+    out+='<div class="hb"><span class="hl" title="'+lblFn(x)+'">'+lblFn(x)+'</span><div class="ht"><div class="hf" style="width:'+w.toFixed(1)+'%;background:'+col+'"></div></div><span class="hv" style="color:'+col+'">'+dispFn(x)+'</span></div>';
+  });
+  return out;
+}
+
+/* ── PROCESS ── */
+function process(raw){
+  if(!raw||raw.length===0){setLd(false);showErr('File khong co du lieu.');return;}
+  var cols=Object.keys(raw[0]);
+  var req=['flg_success','revenue','product_type_name','timein_carlist','login_id','tracking_cart_id'];
+  var miss=req.filter(function(c){return cols.indexOf(c)<0;});
+  if(miss.length){setLd(false);showErr('Thieu cot: '+miss.join(', '));return;}
+
+  ROWS=[];
+  for(var i=0;i<raw.length;i++){
+    var r=raw[i];
+    var tin=pdate(r.timein_carlist);
+    if(!tin)continue;
+    ROWS.push({
+      ok:parseInt(r.flg_success)||0,
+      rev:parseFloat(r.revenue)||0,
+      prod:(r.product_type_name||'Unknown').trim(),
+      chan:((r.channel||'').trim())||'(Truc tiep)',
+      user:(r.login_id||'').trim(),
+      cart:(r.tracking_cart_id||'').trim(),
+      tin:tin,tpay:pdate(r.timein_success),
+      h:tin.getHours(),dow:tin.getDay(),
+      date:tin.toISOString().slice(0,10)
+    });
+  }
+  if(ROWS.length===0){setLd(false);showErr('Khong co dong hop le. Kiem tra cot timein_carlist.');return;}
+
+  /* build user map */
+  UMAP={};
+  ROWS.forEach(function(r){
+    if(!UMAP[r.user])UMAP[r.user]={events:0,paid:0,rl:0,prods:{},firstDate:r.date,lastDate:r.date,cartIds:new Set()};
+    var u=UMAP[r.user];
+    u.events++;
+    if(r.ok===1)u.paid++;else u.rl+=r.rev;
+    u.prods[r.prod]=(u.prods[r.prod]||0)+1;
+    u.cartIds.add(r.cart);
+    if(r.date<u.firstDate)u.firstDate=r.date;
+    if(r.date>u.lastDate)u.lastDate=r.date;
+  });
+
+  render();
+  setLd(false);
+  document.getElementById('up').style.display='none';
+  document.getElementById('db').style.display='block';
+}
+
+function render(){
+  killCh();
+  var paid=ROWS.filter(function(r){return r.ok===1;});
+  var ab=ROWS.filter(function(r){return r.ok===0;});
+  var cr=ROWS.length?paid.length/ROWS.length*100:0;
+  var rl=ab.reduce(function(s,r){return s+r.rev;},0);
+  var dts=ROWS.map(function(r){return r.tin;}).sort(function(a,b){return a-b;});
+  var rng=dts.length?dts[0].toLocaleDateString('vi')+' - '+dts[dts.length-1].toLocaleDateString('vi'):'-';
+  setEl('k1',ROWS.length.toLocaleString());setEl('k1s',rng);
+  setEl('k2',paid.length.toLocaleString());
+  setEl('k3',ab.length.toLocaleString());
+  setEl('k4',cr.toFixed(1)+'%');setEl('k4s','CR tong the');
+  setEl('k5',fN(rl));setEl('k5s','Recover 10% = '+fN(rl*.1));
+
+  bTrend();bProduct();bChannel();bHour();bRevenue();bUser();bCart();bTelesales();bAction();
+}
+
+/* ── TREND ── */
+function bTrend(){
+  var bd={};
+  ROWS.forEach(function(r){if(!bd[r.date])bd[r.date]={p:0,a:0};r.ok===1?bd[r.date].p++:bd[r.date].a++;});
+  var dk=Object.keys(bd).sort();
+  var pa=dk.map(function(d){return bd[d].p;}),aa=dk.map(function(d){return bd[d].a;});
+  var ca=dk.map(function(d){var t=bd[d].p+bd[d].a;return t?+(bd[d].p/t*100).toFixed(1):0;});
+  mkC('c-trend',{data:{labels:dk.map(function(d){return d.slice(5);}),datasets:[
+    {type:'bar',label:'Thanh toan',data:pa,backgroundColor:'#4f8ef7',stack:'s'},
+    {type:'bar',label:'Bo gio',data:aa,backgroundColor:'rgba(240,79,79,.35)',stack:'s'},
+    {type:'line',label:'CR%',data:ca,borderColor:'#22c97a',backgroundColor:'transparent',pointRadius:2,yAxisID:'y2',borderWidth:1.5,order:0}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index'}},
+    scales:{x:{stacked:true,ticks:{font:{size:9},color:'#6b7280',maxTicksLimit:18,maxRotation:45},grid:{color:'rgba(255,255,255,.04)'}},
+      y:{stacked:true,ticks:{font:{size:9},color:'#6b7280',callback:function(v){return v>=1000?(v/1000).toFixed(0)+'k':v;}},grid:{color:'rgba(255,255,255,.04)'}},
+      y2:{position:'right',min:0,max:100,ticks:{font:{size:9},color:'#22c97a',callback:function(v){return v+'%';}},grid:{display:false}}}}
+  });
+  var da=dk.map(function(d,i){return{d:d.slice(5),cr:ca[i],tot:pa[i]+aa[i]};}).filter(function(x){return x.tot>=5;});
+  da.sort(function(a,b){return b.cr-a.cr;});
+  setHtml('best-days',mkBars(da.slice(0,5),function(x){return x.d;},function(x){return x.cr;},100,function(x){return x.cr.toFixed(1)+'%';},null,'#22c97a'));
+  setHtml('worst-days',mkBars(da.slice(-5).reverse(),function(x){return x.d;},function(x){return x.cr;},100,function(x){return x.cr.toFixed(1)+'%';},null,'#f04f4f'));
+  var dn=['CN','T2','T3','T4','T5','T6','T7'],dd=Array.from({length:7},function(){return{p:0,t:0};});
+  ROWS.forEach(function(r){dd[r.dow].t++;if(r.ok===1)dd[r.dow].p++;});
+  var dc=dd.map(function(d){return d.t?+(d.p/d.t*100).toFixed(1):0;});
+  mkC('c-dow',{type:'bar',data:{labels:dn,datasets:[{label:'CR%',data:dc,backgroundColor:dc.map(crC),borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.parsed.y+'%';}}}},
+      scales:{x:{ticks:{font:{size:9},color:'#6b7280'},grid:{display:false}},y:{ticks:{font:{size:9},color:'#6b7280',callback:function(v){return v+'%';}},grid:{color:'rgba(255,255,255,.04)'}}}}});
+}
+
+/* ── PRODUCT ── */
+function bProduct(){
+  var mp={};
+  ROWS.forEach(function(r){if(!mp[r.prod])mp[r.prod]={p:0,t:0,rl:0};mp[r.prod].t++;if(r.ok===1)mp[r.prod].p++;else mp[r.prod].rl+=r.rev;});
+  var prods=Object.keys(mp).filter(function(k){return mp[k].t>=5;}).map(function(k){var v=mp[k];return{name:k,cr:v.t?v.p/v.t*100:0,tot:v.t,rl:v.rl};});
+  var byCR=prods.slice().sort(function(a,b){return b.cr-a.cr;});
+  var byRev=prods.slice().sort(function(a,b){return b.rl-a.rl;}).slice(0,15);
+  var mxRL=Math.max.apply(null,byRev.map(function(p){return p.rl;}))||1;
+  setHtml('prod-cr',mkBars(byCR,function(x){return x.name.slice(0,16);},function(x){return x.cr;},100,function(x){return x.cr.toFixed(0)+'%';},function(x){return crC(x.cr);}));
+  setHtml('prod-rev',mkBars(byRev,function(x){return x.name.slice(0,16);},function(x){return x.rl/mxRL*100;},100,function(x){return fN(x.rl);},null,'#f04f4f'));
+  var bc=prods.map(function(p){return p.cr<30?'rgba(240,79,79,.7)':p.cr<55?'rgba(245,166,35,.7)':'rgba(34,201,122,.7)';});
+  mkC('c-bubble',{type:'bubble',data:{datasets:[{data:prods.map(function(p){return{x:+(p.rl/1e6).toFixed(1),y:+p.cr.toFixed(1),r:Math.max(5,Math.min(26,Math.sqrt(p.tot)/3))};}),backgroundColor:bc,borderColor:bc.map(function(c){return c.replace('.7','.95');}),borderWidth:.5}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){var p=prods[ctx.dataIndex];return p.name+' | CR:'+p.cr.toFixed(1)+'% | Bo lo:'+fN(p.rl);}}}},
+      scales:{x:{title:{display:true,text:'Doanh thu bo lo (trieu VND)',color:'#6b7280',font:{size:9}},ticks:{font:{size:9},color:'#6b7280'},grid:{color:'rgba(255,255,255,.04)'}},
+        y:{title:{display:true,text:'CR (%)',color:'#6b7280',font:{size:9}},min:0,max:100,ticks:{font:{size:9},color:'#6b7280',callback:function(v){return v+'%';}},grid:{color:'rgba(255,255,255,.04)'}}}}});
+}
+
+/* ── CHANNEL ── */
+function bChannel(){
+  var mc={};
+  ROWS.forEach(function(r){if(!mc[r.chan])mc[r.chan]={p:0,t:0,rl:0};mc[r.chan].t++;if(r.ok===1)mc[r.chan].p++;else mc[r.chan].rl+=r.rev;});
+  var chs=Object.keys(mc).map(function(k){var v=mc[k];return{name:k,cr:v.t?+(v.p/v.t*100).toFixed(1):0,tot:v.t,paid:v.p,rl:v.rl};}).sort(function(a,b){return b.tot-a.tot;});
+  mkC('c-ch-cr',{type:'bar',data:{labels:chs.map(function(c){return c.name;}),datasets:[{label:'CR%',data:chs.map(function(c){return c.cr;}),backgroundColor:chs.map(function(c,i){return PAL[i%PAL.length];}),borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ctx.parsed.y+'%';}}}},
+      scales:{x:{ticks:{font:{size:9},color:'#6b7280'},grid:{display:false}},y:{min:0,max:105,ticks:{font:{size:9},color:'#6b7280',callback:function(v){return v+'%';}},grid:{color:'rgba(255,255,255,.04)'}}}}});
+  mkC('c-ch-vol',{type:'doughnut',data:{labels:chs.map(function(c){return c.name;}),datasets:[{data:chs.map(function(c){return c.tot;}),backgroundColor:chs.map(function(c,i){return PAL[i%PAL.length];}),borderWidth:1,borderColor:'#13161d'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:9},color:'#6b7280',padding:6,boxWidth:9}}},cutout:'58%'}});
+  var det='';
+  chs.forEach(function(c,i){var col=PAL[i%PAL.length];
+    det+='<div class="hb" style="margin-bottom:9px"><span class="hl">'+c.name+'</span><div style="flex:1"><div style="display:flex;align-items:center;gap:5px;margin-bottom:2px"><div class="ht" style="flex:1"><div class="hf" style="width:'+c.cr+'%;background:'+col+'"></div></div><span style="font-family:var(--mo);font-size:10px;color:'+col+'">'+c.cr+'%</span></div><span style="font-size:9px;color:var(--mu)">'+c.paid.toLocaleString()+' / '+c.tot.toLocaleString()+' tong - Bo lo: '+fN(c.rl)+'</span></div></div>';
+  });
+  setHtml('ch-det',det);
+}
+
+/* ── HOUR ── */
+function bHour(){
+  var hd=Array.from({length:24},function(){return{p:0,t:0};});
+  ROWS.forEach(function(r){hd[r.h].t++;if(r.ok===1)hd[r.h].p++;});
+  var hrs=Array.from({length:24},function(_,i){return i+'h';});
+  var pa=hd.map(function(d){return d.p;}),aa=hd.map(function(d){return d.t-d.p;}),ca=hd.map(function(d){return d.t?+(d.p/d.t*100).toFixed(1):0;});
+  mkC('c-hv',{type:'bar',data:{labels:hrs,datasets:[{label:'Thanh toan',data:pa,backgroundColor:'#4f8ef7',stack:'s'},{label:'Bo gio',data:aa,backgroundColor:'rgba(240,79,79,.35)',stack:'s'}]},options:gridOpts(true)});
+  mkC('c-hcr',{type:'line',data:{labels:hrs,datasets:[{label:'CR%',data:ca,borderColor:'#22c97a',backgroundColor:'rgba(34,201,122,.08)',fill:true,pointRadius:2,borderWidth:1.5,tension:.3}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.parsed.y+'%';}}}},
+      scales:{x:{ticks:{font:{size:9},color:'#6b7280',autoSkip:false},grid:{display:false}},y:{ticks:{font:{size:9},color:'#6b7280',callback:function(v){return v+'%';}},grid:{color:'rgba(255,255,255,.04)'}}}}});
+  var sv=ca.map(function(c,i){return{h:i,cr:c,vol:hd[i].t};}).filter(function(x){return x.vol>5;}).sort(function(a,b){return b.cr-a.cr;});
+  var best=sv.slice(0,3).map(function(x){return x.h+'h ('+x.cr+'%)';}).join(', ');
+  var worst=sv.slice(-3).map(function(x){return x.h+'h ('+x.cr+'%)';}).join(', ');
+  var peakV=hd.map(function(d,i){return{i:i,t:d.t};}).sort(function(a,b){return b.t-a.t;}).slice(0,3).map(function(x){return x.i+'h';}).join(', ');
+  setHtml('h-pills','<span class="pill good">CR cao nhat: '+best+'</span> <span class="pill hot">CR thap nhat: '+worst+'</span> <span class="pill warn">Volume cao nhat: '+peakV+'</span>');
+}
+
+/* ── REVENUE ── */
+function bRevenue(){
+  var bkts=[{l:'<100k',mn:0,mx:1e5},{l:'100-300k',mn:1e5,mx:3e5},{l:'300-500k',mn:3e5,mx:5e5},{l:'500k-1M',mn:5e5,mx:1e6},{l:'>1M',mn:1e6,mx:Infinity}];
+  var bd=bkts.map(function(b){
+    var inn=ROWS.filter(function(r){return r.rev>=b.mn&&r.rev<b.mx;});
+    var pp=inn.filter(function(r){return r.ok===1;});
+    var rl=inn.filter(function(r){return r.ok===0;}).reduce(function(s,r){return s+r.rev;},0);
+    return{lbl:b.l,cr:inn.length?+(pp.length/inn.length*100).toFixed(1):0,n:inn.length,rl:rl};
+  });
+  mkC('c-rcr',{type:'bar',data:{labels:bd.map(function(b){return b.lbl;}),datasets:[{label:'CR%',data:bd.map(function(b){return b.cr;}),backgroundColor:bd.map(function(b){return crC(b.cr);}),borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.parsed.y+'%';}}}},
+      scales:{x:{ticks:{font:{size:9},color:'#6b7280'},grid:{display:false}},y:{min:0,max:100,ticks:{font:{size:9},color:'#6b7280',callback:function(v){return v+'%';}},grid:{color:'rgba(255,255,255,.04)'}}}}});
+  mkC('c-rrec',{type:'bar',data:{labels:bd.map(function(b){return b.lbl;}),datasets:[
+    {label:'Tong bo lo',data:bd.map(function(b){return+(b.rl/1e6).toFixed(1);}),backgroundColor:'rgba(240,79,79,.2)',borderColor:'#f04f4f',borderWidth:1},
+    {label:'5%',data:bd.map(function(b){return+(b.rl/1e6*.05).toFixed(1);}),backgroundColor:'#f5a623',borderRadius:3},
+    {label:'10%',data:bd.map(function(b){return+(b.rl/1e6*.1).toFixed(1);}),backgroundColor:'#22c97a',borderRadius:3}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:9},color:'#6b7280',padding:6,boxWidth:9}}},
+    scales:{x:{ticks:{font:{size:9},color:'#6b7280'},grid:{display:false}},y:{ticks:{font:{size:9},color:'#6b7280',callback:function(v){return v+'M';}},grid:{color:'rgba(255,255,255,.04)'}}}}});
+  var ttps=ROWS.filter(function(r){return r.ok===1&&r.tpay&&r.tin;}).map(function(r){return(r.tpay-r.tin)/6e4;}).filter(function(x){return x>0&&x<10080;}).sort(function(a,b){return a-b;});
+  if(ttps.length>0){
+    var med=ttps[Math.floor(ttps.length/2)];
+    var avg=ttps.reduce(function(a,b){return a+b;},0)/ttps.length;
+    var w5=ttps.filter(function(x){return x<=5;}).length;
+    var w30=ttps.filter(function(x){return x<=30;}).length;
+    setHtml('time-st','<div class="sg"><div class="sb"><div class="sv">'+med.toFixed(1)+' ph</div><div class="sl">Trung vi</div></div><div class="sb"><div class="sv">'+avg.toFixed(1)+' ph</div><div class="sl">Trung binh</div></div><div class="sb"><div class="sv">'+(w5/ttps.length*100).toFixed(0)+'%</div><div class="sl">Trong 5 phut</div></div><div class="sb"><div class="sv">'+(w30/ttps.length*100).toFixed(0)+'%</div><div class="sl">Trong 30 phut</div></div></div><div class="pills"><span class="pill good">'+w5.toLocaleString()+' don thanh toan trong 5 phut</span><span class="pill good">'+w30.toLocaleString()+' don trong 30 phut</span><span class="pill info">Tong '+ttps.length.toLocaleString()+' don co timestamp hop le</span></div>');
+  }else{setHtml('time-st','<span style="font-size:11px;color:var(--mu)">Khong du du lieu timein_success.</span>');}
+}
+
+/* ── USER SEGMENT ── */
+function segOf(u){var f=u.events;return f>=10?'Power (10+)':f>=4?'Thuong xuyen (4-10)':f>=2?'Thinh thoang (2-3)':'Moi (1 lan)';}
+function bUser(){
+  var segs=['Moi (1 lan)','Thinh thoang (2-3)','Thuong xuyen (4-10)','Power (10+)'];
+  var sd={};segs.forEach(function(s){sd[s]={p:0,t:0,rl:0,users:0};});
+  Object.keys(UMAP).forEach(function(uid){var u=UMAP[uid];var s=segOf(u);sd[s].users++;sd[s].t+=u.events;sd[s].p+=u.paid;sd[s].rl+=u.rl;});
+  var crs=segs.map(function(s){return sd[s].t?+(sd[s].p/sd[s].t*100).toFixed(1):0;});
+  var abs=segs.map(function(s){return sd[s].t-sd[s].p;});
+  var sc=['#22c97a','#f5a623','#f04f4f','#4f8ef7'];
+  mkC('c-scr',{type:'bar',data:{labels:segs.map(function(s){return s.split(' ')[0];}),datasets:[{label:'CR%',data:crs,backgroundColor:sc,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.parsed.y+'%';}}}},
+      scales:{x:{ticks:{font:{size:9},color:'#6b7280'},grid:{display:false}},y:{min:0,max:100,ticks:{font:{size:9},color:'#6b7280',callback:function(v){return v+'%';}},grid:{color:'rgba(255,255,255,.04)'}}}}});
+  mkC('c-sab',{type:'doughnut',data:{labels:segs,datasets:[{data:abs,backgroundColor:sc,borderWidth:1,borderColor:'#13161d'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:9},color:'#6b7280',padding:5,boxWidth:8}}},cutout:'54%'}});
+  var det='';
+  segs.forEach(function(s,i){
+    var u=sd[s];
+    det+='<div class="hb" style="margin-bottom:9px"><span class="hl">'+s+'</span><div class="ht"><div class="hf" style="width:'+crs[i]+'%;background:'+sc[i]+'"></div></div><span class="hv" style="color:'+sc[i]+'">'+crs[i]+'%</span><span class="hv2">'+u.users.toLocaleString()+' KH</span><span class="hv2">'+abs[i].toLocaleString()+' bo</span></div>';
+  });
+  det+='<div style="margin-top:10px;font-size:10px;color:var(--mu);line-height:1.6">Nhom <b style="color:#f04f4f">Thuong xuyen (4-10)</b> bo gio nhieu nhat — dang cho deal. Nhom <b style="color:#22c97a">Moi</b> CR cao nhat — nen giu UX don gian. Nhom <b style="color:#4f8ef7">Power</b> quyet dinh nhanh — can VIP pricing.</div>';
+  setHtml('seg-det',det);
+  renderUserRevTable();
+}
+
+function renderUserRevTable(){
+  var minrev=parseFloat(document.getElementById('minrev').value)||0;
+  var segfil=(document.getElementById('segfil').value||'').toLowerCase();
+  var users=Object.keys(UMAP).map(function(uid){
+    var u=UMAP[uid];
+    var s=segOf(u);
+    var cr=u.events?+(u.paid/u.events*100).toFixed(1):0;
+    return{uid:uid,events:u.events,paid:u.paid,rl:u.rl,cr:cr,seg:s,nprods:Object.keys(u.prods).length};
+  }).filter(function(x){return x.rl>=minrev&&(segfil===''||x.seg.toLowerCase().indexOf(segfil)>=0);})
+    .sort(function(a,b){return b.rl-a.rl;}).slice(0,1000);
+  var tbl='<div id="ut-wrap"><table class="tbl"><thead><tr><th>Login ID</th><th>Phan khuc</th><th>So gio</th><th>Da TT</th><th>CR</th><th>Revenue bo lo</th><th>So loai SP</th></tr></thead><tbody>';
+  users.forEach(function(x){
+    var cc=x.cr>=65?'var(--gr)':x.cr>=45?'var(--am)':'var(--rd)';
+    tbl+='<tr><td>'+x.uid+'</td><td><span style="font-size:9px;padding:2px 6px;border-radius:10px;background:var(--sur2);color:var(--mu)">'+x.seg+'</span></td><td>'+x.events+'</td><td>'+x.paid+'</td><td style="color:'+cc+'">'+x.cr+'%</td><td style="color:var(--rd)">'+fNd(x.rl)+'</td><td>'+x.nprods+'</td></tr>';
+  });
+  tbl+='</tbody></table></div>';
+  setHtml('urv-wrap',tbl);
+}
+
+/* ── CART ANALYSIS ── */
+function bCart(){
+  var cmap={};
+  ROWS.forEach(function(r){
+    if(!cmap[r.cart])cmap[r.cart]={prods:[],ok:0,n:0};
+    cmap[r.cart].prods.push(r.prod);
+    cmap[r.cart].n++;
+    if(r.ok===1)cmap[r.cart].ok=1;
+  });
+  var carts=Object.values(cmap);
+  var szD={};
+  carts.forEach(function(c){var sz=new Set(c.prods).size;if(!szD[sz])szD[sz]={p:0,t:0};szD[sz].t++;if(c.ok===1)szD[sz].p++;});
+  var szKeys=Object.keys(szD).map(Number).filter(function(k){return k<=10;}).sort(function(a,b){return a-b;});
+  var szCR=szKeys.map(function(k){return szD[k].t?+(szD[k].p/szD[k].t*100).toFixed(1):0;});
+  var szVol=szKeys.map(function(k){return szD[k].t;});
+  mkC('c-cart-cr',{type:'bar',data:{labels:szKeys.map(function(k){return k+' SP';}),datasets:[{label:'CR%',data:szCR,backgroundColor:szCR.map(crC),borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.parsed.y+'%';}}}},
+      scales:{x:{ticks:{font:{size:9},color:'#6b7280'},grid:{display:false}},y:{min:0,max:100,ticks:{font:{size:9},color:'#6b7280',callback:function(v){return v+'%';}},grid:{color:'rgba(255,255,255,.04)'}}}}});
+  mkC('c-cart-vol',{type:'bar',data:{labels:szKeys.map(function(k){return k+' SP';}),datasets:[{label:'Gio hang',data:szVol,backgroundColor:'#4f8ef7',borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9},color:'#6b7280'},grid:{display:false}},y:{ticks:{font:{size:9},color:'#6b7280'},grid:{color:'rgba(255,255,255,.04)'}}}}});
+
+  /* combos */
+  var pairD={};
+  carts.forEach(function(c){
+    var uniq=Array.from(new Set(c.prods)).sort();
+    for(var i=0;i<uniq.length;i++){for(var j=i+1;j<uniq.length;j++){var key=uniq[i]+' + '+uniq[j];if(!pairD[key])pairD[key]={n:0,ok:0};pairD[key].n++;if(c.ok===1)pairD[key].ok++;}}
+  });
+  var pairs=Object.keys(pairD).filter(function(k){return pairD[k].n>=3;}).map(function(k){var v=pairD[k];return{pair:k,n:v.n,cr:v.n?+(v.ok/v.n*100).toFixed(0):0};}).sort(function(a,b){return b.n-a.n;}).slice(0,15);
+  var mxN=pairs.length?pairs[0].n:1;
+  setHtml('combo-det',mkBars(pairs,function(x){return x.pair.slice(0,28);},function(x){return x.n/mxN*100;},100,function(x){return x.n+' (CR:'+x.cr+'%)';},function(x){return crC(x.cr);}));
+
+  /* cross sell users */
+  var crossUsers=Object.keys(UMAP).map(function(uid){var u=UMAP[uid];return{uid:uid,nprods:Object.keys(u.prods).length,prods:Object.keys(u.prods),cr:u.events?+(u.paid/u.events*100).toFixed(1):0};}).filter(function(x){return x.nprods>=3;}).sort(function(a,b){return b.nprods-a.nprods;}).slice(0,10);
+  var ct='<table class="tbl"><thead><tr><th>Login ID</th><th>So loai SP</th><th>Cac san pham</th><th>CR</th></tr></thead><tbody>';
+  crossUsers.forEach(function(x){var cc=x.cr>=65?'var(--gr)':x.cr>=45?'var(--am)':'var(--rd)';ct+='<tr><td>'+x.uid+'</td><td style="color:var(--am)">'+x.nprods+'</td><td style="font-size:9px;color:var(--mu)">'+x.prods.slice(0,5).join(', ')+(x.prods.length>5?'...':'')+'</td><td style="color:'+cc+'">'+x.cr+'%</td></tr>';});
+  ct+='</tbody></table>';
+  setHtml('cross-det',crossUsers.length?ct:'<span style="font-size:11px;color:var(--mu)">Khong co user nao co >=3 loai san pham.</span>');
+}
+
+/* ── TELESALES ── */
+var TS_DATA=[];
+function bTelesales(){
+  TS_DATA=Object.keys(UMAP).map(function(uid){
+    var u=UMAP[uid];
+    var cr=u.events?+(u.paid/u.events*100).toFixed(1):0;
+    var seg=segOf(u);
+    var topProd='';var mx=0;
+    Object.keys(u.prods).forEach(function(p){if(u.prods[p]>mx){mx=u.prods[p];topProd=p;}});
+    return{uid:uid,events:u.events,paid:u.paid,rl:u.rl,cr:cr,seg:seg,topProd:topProd,nprods:Object.keys(u.prods).length,firstDate:u.firstDate,lastDate:u.lastDate};
+  }).filter(function(x){return x.rl>0;}).sort(function(a,b){return b.rl-a.rl;});
+
+  var totalRL=TS_DATA.reduce(function(s,x){return s+x.rl;},0);
+  var top10RL=TS_DATA.slice(0,10).reduce(function(s,x){return s+x.rl;},0);
+  var zeroCR=TS_DATA.filter(function(x){return x.cr===0;}).length;
+  var highVal=TS_DATA.filter(function(x){return x.rl>=1e6;}).length;
+  setHtml('ts-kpi',
+    '<div class="kc"><div class="kl">Tong user bo lo</div><div class="kv" style="color:var(--rd)">'+TS_DATA.length.toLocaleString()+'</div><div class="ks">Co revenue bi bo</div></div>'+
+    '<div class="kc"><div class="kl">Top 10 user</div><div class="kv" style="color:var(--am)">'+fN(top10RL)+'</div><div class="ks">'+(totalRL>0?(top10RL/totalRL*100).toFixed(0):'0')+'% tong revenue bo lo</div></div>'+
+    '<div class="kc"><div class="kl">Don tren 1 trieu</div><div class="kv" style="color:var(--pu)">'+highVal.toLocaleString()+'</div><div class="ks">User uu tien telesales</div></div>'+
+    '<div class="kc"><div class="kl">User CR = 0%</div><div class="kv" style="color:var(--rd)">'+zeroCR.toLocaleString()+'</div><div class="ks">Chua mua du lan nao</div></div>');
+
+  /* rev by seg chart */
+  var segs=['Moi (1 lan)','Thinh thoang (2-3)','Thuong xuyen (4-10)','Power (10+)'];
+  var srl=segs.map(function(s){return TS_DATA.filter(function(x){return x.seg===s;}).reduce(function(a,x){return a+x.rl;},0);});
+  mkC('c-ts-rev',{type:'bar',data:{labels:segs.map(function(s){return s.split(' ')[0];}),datasets:[{label:'Revenue bo lo',data:srl.map(function(v){return+(v/1e6).toFixed(0);}),backgroundColor:['#22c97a','#f5a623','#f04f4f','#4f8ef7'],borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.parsed.y+'M VND';}}}},
+      scales:{x:{ticks:{font:{size:9},color:'#6b7280'},grid:{display:false}},y:{ticks:{font:{size:9},color:'#6b7280',callback:function(v){return v+'M';}},grid:{color:'rgba(255,255,255,.04)'}}}}});
+
+  renderTSTable();
+}
+
+function renderTSTable(){
+  var search=(document.getElementById('ts-search').value||'').toLowerCase();
+  var minrev=parseFloat(document.getElementById('ts-minrev').value)||0;
+  var lim=parseInt(document.getElementById('ts-limit').value)||50;
+  var data=TS_DATA.filter(function(x){return x.rl>=minrev&&(search===''||x.uid.toLowerCase().indexOf(search)>=0);}).slice(0,lim);
+  document.getElementById('ts-count').textContent='Hien thi '+data.length+' / '+TS_DATA.filter(function(x){return x.rl>=minrev;}).length+' user';
+  var tbl='<div id="ts-wrap" style="max-height:420px;overflow-y:auto;border-radius:7px;border:.5px solid var(--bd)"><table class="tbl"><thead><tr><th>#</th><th>Login ID</th><th>Phan khuc</th><th>Revenue bo lo</th><th>CR</th><th>So gio</th><th>Da TT</th><th>SP chinh</th><th>So loai SP</th><th>Lan dau</th></tr></thead><tbody>';
+  data.forEach(function(x,i){
+    var cc=x.cr===0?'var(--rd)':x.cr<50?'var(--am)':'var(--gr)';
+    var pri=x.rl>=5e6?'var(--rd)':x.rl>=1e6?'var(--am)':'var(--mu)';
+    tbl+='<tr><td style="color:var(--mu)">'+(i+1)+'</td><td style="color:var(--bl)">'+x.uid+'</td><td><span style="font-size:9px;padding:2px 5px;border-radius:8px;background:var(--sur2);color:var(--mu)">'+x.seg+'</span></td><td style="color:'+pri+';font-weight:600">'+fNd(x.rl)+'</td><td style="color:'+cc+'">'+x.cr+'%</td><td>'+x.events+'</td><td>'+x.paid+'</td><td style="font-size:9px;color:var(--mu)">'+x.topProd.slice(0,18)+'</td><td style="color:var(--am)">'+x.nprods+'</td><td style="font-size:9px">'+x.firstDate+'</td></tr>';
+  });
+  tbl+='</tbody></table></div>';
+  setHtml('ts-wrap',tbl);
+}
+
+/* ── ACTION ── */
+function bAction(){
+  var paid=ROWS.filter(function(r){return r.ok===1;});
+  var ab=ROWS.filter(function(r){return r.ok===0;});
+  var rl=ab.reduce(function(s,r){return s+r.rev;},0);
+  var mp={};
+  ROWS.forEach(function(r){if(!mp[r.prod])mp[r.prod]={p:0,t:0,rl:0};mp[r.prod].t++;if(r.ok===1)mp[r.prod].p++;else mp[r.prod].rl+=r.rev;});
+  var zeroCR=Object.keys(mp).filter(function(k){return mp[k].t>=5&&mp[k].p===0;});
+  var lowCR=Object.keys(mp).filter(function(k){return mp[k].t>=20&&mp[k].p/mp[k].t<0.3;}).sort(function(a,b){return mp[b].rl-mp[a].rl;}).slice(0,3).map(function(k){return k+' ('+(mp[k].p/mp[k].t*100).toFixed(0)+'%)';});
+  var regAb=Object.keys(UMAP).filter(function(uid){var u=UMAP[uid];return u.events>=4&&u.events-u.paid>0;}).length;
+  var highValAb=TS_DATA.filter(function(x){return x.rl>=1e6;}).length;
+  var topRevLost=TS_DATA.slice(0,1)[0];
+
+  var acts=[];
+  if(zeroCR.length>0)acts.push({col:'#f04f4f',bg:'rgba(240,79,79,.12)',title:'Kiem tra ky thuat san pham CR=0%',
+    desc:'San pham '+zeroCR.slice(0,3).join(', ')+' co nhieu luot vao gio nhung 0 thanh toan. Kiem tra ngay: available, gia, nut checkout, JS error.',
+    tags:[['Lam ngay','tr'],['0 chi phi','tg'],['Bug likely','tb2']]});
+  acts.push({col:'#f5a623',bg:'rgba(245,166,35,.12)',title:'Abandoned cart email automation — '+fN(rl)+' dang bo lo',
+    desc:ab.length.toLocaleString()+' gio bi bo. Trien khai 3-email sequence: 1h (nhac nho), 24h (social proof), 72h (offer nho). Don >1M -> telesales goi ngay.',
+    tags:[['Tuan nay','ta'],['Marketing','tb2'],['ROI cao','tg']]});
+  if(highValAb>0)acts.push({col:'#7c5cbf',bg:'rgba(124,92,191,.12)',title:'Telesales: '+highValAb+' user co revenue bo lo >1 trieu dong',
+    desc:'Top user: '+(topRevLost?topRevLost.uid+' ('+fNd(topRevLost.rl)+')':'N/A')+'. Xem tab Telesales list de export danh sach. Goi dien trong 24h sau khi bo gio.',
+    tags:[['Tuan nay','tp2'],['Sales','tb2'],['ROI cao nhat','tg']]});
+  if(lowCR.length>0)acts.push({col:'#4f8ef7',bg:'rgba(79,142,247,.12)',title:'Toi uu san pham CR thap',
+    desc:'Can cai thien: '+lowCR.join('; ')+'. Them: landing page rieng, so sanh doi thu, demo/trial, bao gia B2B.',
+    tags:[['2-4 tuan','tb2'],['Product','ta']]});
+  if(regAb>100)acts.push({col:'#7c5cbf',bg:'rgba(124,92,191,.12)',title:'Loyalty program cho '+regAb+' user thuong xuyen bo gio',
+    desc:'Nhom 4-10 lan dang cho deal. Giai phap: diem tich luy, badge than thiet, email uu dai gia han som.',
+    tags:[['1 thang','tb2'],['CRM','ta'],['CR +10-15%','tg']]});
+  acts.push({col:'#22c97a',bg:'rgba(34,201,122,.12)',title:'Toi uu trust & UX checkout',
+    desc:'Bo gio trong <30 giay = friction ngay dau. Them: badge bao mat, live chat, so nguoi dang xem, dam bao hoan tien, toi uu mobile.',
+    tags:[['2-3 tuan','tb2'],['UX','ta']]});
+  acts.push({col:'#6b7280',bg:'rgba(107,114,128,.12)',title:'Trien khai checkout funnel tracking',
+    desc:'Hien chi co 2 diem do. Can event tracking tung buoc + Hotjar recording de biet dung diem thoat.',
+    tags:[['1-2 tuan','tb2'],['Analytics','ta'],['Nen tang','tg']]});
+
+  var html='';
+  acts.forEach(function(a,i){
+    html+='<div class="ai"><div class="an" style="background:'+a.bg+';color:'+a.col+'">'+(i+1)+'</div><div><div class="at" style="color:'+a.col+'">'+a.title+'</div><div class="ad">'+a.desc+'</div><div class="ats">'+a.tags.map(function(t){return'<span class="tag '+t[1]+'">'+t[0]+'</span>';}).join('')+'</div></div></div>';
+  });
+  setHtml('act-list',html);
+}
+
+/* ── TABS ── */
+function goTab(t,btn){
+  document.querySelectorAll('.tbtn').forEach(function(b){b.classList.remove('on');});
+  document.querySelectorAll('.tp').forEach(function(p){p.classList.remove('on');});
+  if(btn)btn.classList.add('on');
+  var el=document.getElementById('tp-'+t);if(el)el.classList.add('on');
+  setTimeout(function(){Object.values(CH).forEach(function(c){try{c.resize();}catch(e){}});},60);
+}
+</script>
+</body>
+</html>
