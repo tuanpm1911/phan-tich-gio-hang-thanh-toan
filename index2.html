@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cart Conversion Dashboard v2</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;500;600&display=swap');
+:root{
+  --bg:#0d0f14;--sur:#13161d;--sur2:#1a1e28;--sur3:#21263a;
+  --bd:rgba(255,255,255,.07);--bd2:rgba(255,255,255,.13);
+  --tx:#e8eaf0;--mu:#6b7280;--mu2:#4b5563;
+  --bl:#4f8ef7;--gr:#22c97a;--rd:#f04f4f;--am:#f5a623;--pu:#7c5cbf;--te:#5dcaa5;--pi:#f093fb;
+  --fn:'Sora',sans-serif;--mo:'DM Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--fn);background:var(--bg);color:var(--tx);min-height:100vh;font-size:14px;line-height:1.6}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:2px}
+
+/* HEADER */
+header{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;border-bottom:.5px solid var(--bd);position:sticky;top:0;z-index:100;background:rgba(13,15,20,.97);backdrop-filter:blur(12px);gap:12px;flex-wrap:wrap}
+.logo{font-size:11px;font-weight:500;color:var(--mu);font-family:var(--mo);letter-spacing:.07em;white-space:nowrap}
+.logo b{color:var(--bl)}
+.hbtns{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.rbtn{padding:5px 11px;background:transparent;border:.5px solid var(--bd2);color:var(--mu);border-radius:6px;font-family:var(--fn);font-size:11px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.rbtn:hover{color:var(--tx);border-color:var(--bl)}
+.rbtn.export{border-color:rgba(34,201,122,.4);color:var(--gr);display:none}
+.rbtn.export:hover{background:rgba(34,201,122,.08)}
+#file-status{display:flex;gap:8px;flex-wrap:wrap}
+.fs-pill{font-size:10px;font-family:var(--mo);padding:3px 9px;border-radius:20px;border:.5px solid var(--bd2);color:var(--mu);white-space:nowrap}
+.fs-pill.ok{border-color:rgba(34,201,122,.4);color:var(--gr);background:rgba(34,201,122,.06)}
+.fs-pill.warn{border-color:rgba(245,166,35,.4);color:var(--am)}
+
+/* UPLOAD */
+#up{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - 57px);padding:32px;gap:16px}
+.up-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:760px;width:100%}
+.dz{border:1.5px dashed var(--bd2);border-radius:16px;padding:28px 24px;text-align:center;cursor:pointer;transition:all .2s;background:var(--sur);position:relative}
+.dz:hover,.dz.drag{border-color:var(--bl);background:rgba(79,142,247,.04)}
+.dz.done{border-color:rgba(34,201,122,.5);background:rgba(34,201,122,.04)}
+.dz-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:20px}
+.dz-icon.csv{background:rgba(79,142,247,.12)}
+.dz-icon.xlsx{background:rgba(124,92,191,.12)}
+.dz-t{font-size:14px;font-weight:600;margin-bottom:4px}
+.dz-s{font-size:11px;color:var(--mu);margin-bottom:14px;line-height:1.6}
+.ulbl{display:inline-block;padding:7px 18px;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;transition:opacity .2s}
+.ulbl.csv{background:var(--bl);color:#fff}
+.ulbl.xlsx{background:var(--pu);color:#fff}
+.ulbl:hover{opacity:.85}
+.dz-done-lbl{font-size:10px;font-family:var(--mo);color:var(--gr);margin-top:8px}
+.dz-opt{font-size:10px;color:var(--mu2);margin-top:4px}
+.up-note{max-width:760px;width:100%;background:var(--sur);border:.5px solid var(--bd);border-radius:13px;padding:14px 18px}
+.up-note-t{font-size:11px;font-weight:500;color:var(--tx);margin-bottom:8px;font-family:var(--mo)}
+.ct{display:inline-block;font-family:var(--mo);font-size:10px;padding:2px 7px;border-radius:4px;background:rgba(79,142,247,.12);color:var(--bl);margin:2px 2px 2px 0}
+.ct.p{background:rgba(124,92,191,.12);color:var(--pu)}
+.ct.o{background:rgba(255,255,255,.05);color:var(--mu)}
+.go-btn{display:block;margin:14px auto 0;padding:10px 32px;background:var(--gr);color:#fff;border:none;border-radius:8px;font-family:var(--fn);font-size:13px;font-weight:500;cursor:pointer;transition:opacity .2s;opacity:.4;pointer-events:none}
+.go-btn.ready{opacity:1;pointer-events:all}
+.go-btn.ready:hover{opacity:.88}
+
+/* LOADING */
+#ld{display:none;position:fixed;inset:0;background:rgba(13,15,20,.9);backdrop-filter:blur(8px);z-index:999;align-items:center;justify-content:center;flex-direction:column;gap:12px}
+.sp{width:32px;height:32px;border:2px solid var(--bd2);border-top-color:var(--bl);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ltx{font-size:11px;color:var(--mu);font-family:var(--mo)}
+
+/* DASHBOARD */
+#db{display:none;padding:18px 24px 60px;max-width:1360px;margin:0 auto}
+#err{background:rgba(240,79,79,.1);border:.5px solid rgba(240,79,79,.3);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--rd);margin-bottom:12px;display:none}
+
+/* JOIN STATUS BAR */
+#join-bar{background:var(--sur);border:.5px solid var(--bd);border-radius:10px;padding:10px 16px;margin-bottom:16px;display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+.jb-item{font-size:11px;color:var(--mu);font-family:var(--mo)}
+.jb-item b{color:var(--tx)}
+.jb-sep{color:var(--bd2)}
+
+/* KPI */
+.kg{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:18px}
+.kg2{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px}
+.kc{background:var(--sur);border:.5px solid var(--bd);border-radius:11px;padding:13px 15px}
+.kl{font-size:9px;color:var(--mu);font-family:var(--mo);letter-spacing:.05em;margin-bottom:4px;text-transform:uppercase}
+.kv{font-size:21px;font-weight:600;line-height:1}
+.ks{font-size:10px;color:var(--mu);margin-top:3px}
+
+/* TABS */
+.tb{display:flex;gap:2px;background:var(--sur);border:.5px solid var(--bd);border-radius:9px;padding:3px;margin-bottom:16px;flex-wrap:wrap}
+.tbtn{padding:5px 12px;border:none;background:transparent;color:var(--mu);font-family:var(--fn);font-size:11px;font-weight:500;border-radius:6px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.tbtn.on{background:var(--sur2);color:var(--tx)}
+.tbtn .new{font-size:8px;background:rgba(124,92,191,.25);color:var(--pu);padding:1px 5px;border-radius:8px;margin-left:3px;vertical-align:middle}
+.tp{display:none}
+.tp.on{display:block}
+
+/* CARDS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:11px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px;margin-bottom:11px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:11px}
+.cc{background:var(--sur);border:.5px solid var(--bd);border-radius:11px;padding:15px;margin-bottom:11px}
+.cc.nm{margin-bottom:0}
+.ct2{font-size:9px;font-weight:500;color:var(--mu);font-family:var(--mo);letter-spacing:.05em;text-transform:uppercase;margin-bottom:11px}
+.cw{position:relative;width:100%}
+
+/* HBARS */
+.hb{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.hl{font-size:10px;color:var(--mu);width:108px;flex-shrink:0;text-align:right;font-family:var(--mo);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ht{flex:1;height:6px;background:var(--sur2);border-radius:3px;overflow:hidden}
+.hf{height:100%;border-radius:3px}
+.hv{font-size:10px;width:50px;flex-shrink:0;font-family:var(--mo)}
+.hv2{font-size:10px;color:var(--mu);width:44px;flex-shrink:0;font-family:var(--mo);text-align:right}
+
+/* STAT */
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:11px}
+.sb{background:var(--sur2);border-radius:9px;padding:10px 12px;text-align:center}
+.sv{font-size:16px;font-weight:600;color:var(--bl)}
+.sl{font-size:9px;color:var(--mu);margin-top:2px;font-family:var(--mo)}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;font-size:11px}
+.tbl th{font-size:9px;font-weight:500;color:var(--mu);text-transform:uppercase;letter-spacing:.04em;padding:6px 9px;text-align:left;border-bottom:.5px solid var(--bd);white-space:nowrap}
+.tbl td{padding:6px 9px;border-bottom:.5px solid var(--bd);color:var(--mu);vertical-align:middle}
+.tbl td:first-child{color:var(--tx);font-family:var(--mo);font-size:10px}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:rgba(255,255,255,.015)}
+.tbl-wrap{border-radius:8px;border:.5px solid var(--bd);overflow:hidden}
+.tbl-scroll{max-height:420px;overflow-y:auto}
+
+/* ACTION */
+.al{display:flex;flex-direction:column;gap:10px}
+.ai{background:var(--sur);border:.5px solid var(--bd);border-radius:11px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start}
+.an{width:27px;height:27px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;font-family:var(--mo)}
+.at{font-size:12px;font-weight:600;margin-bottom:3px}
+.ad{font-size:11px;color:var(--mu);line-height:1.6}
+.ats{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.tag{font-size:9px;padding:2px 7px;border-radius:20px;font-family:var(--mo)}
+.tr{background:rgba(240,79,79,.15);color:var(--rd)}
+.tg{background:rgba(34,201,122,.15);color:var(--gr)}
+.tb2{background:rgba(79,142,247,.15);color:var(--bl)}
+.ta{background:rgba(245,166,35,.15);color:var(--am)}
+.tp2{background:rgba(124,92,191,.15);color:var(--pu)}
+
+/* PILLS */
+.pills{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.pill{font-size:10px;padding:3px 9px;border-radius:20px;border:.5px solid var(--bd2);color:var(--mu)}
+.pill.hot{border-color:rgba(240,79,79,.4);color:var(--rd);background:rgba(240,79,79,.06)}
+.pill.good{border-color:rgba(34,201,122,.4);color:var(--gr);background:rgba(34,201,122,.06)}
+.pill.warn{border-color:rgba(245,166,35,.4);color:var(--am);background:rgba(245,166,35,.06)}
+.pill.info{border-color:rgba(79,142,247,.4);color:var(--bl);background:rgba(79,142,247,.06)}
+.pill.pu{border-color:rgba(124,92,191,.4);color:var(--pu);background:rgba(124,92,191,.06)}
+
+/* FILTER ROW */
+.frow{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.fi{background:var(--sur2);border:.5px solid var(--bd2);color:var(--tx);font-family:var(--mo);font-size:11px;padding:5px 9px;border-radius:6px;outline:none}
+.fi:focus{border-color:var(--bl)}
+select.fi option{background:var(--sur2)}
+.flab{font-size:10px;color:var(--mu);font-family:var(--mo);white-space:nowrap}
+
+/* BADGE */
+.bdg{font-size:9px;padding:2px 7px;border-radius:10px;font-weight:500;display:inline-block}
+.bdg-gr{background:#EAF3DE;color:#3B6D11}
+.bdg-rd{background:#FCEBEB;color:#A32D2D}
+.bdg-am{background:#FAEEDA;color:#854F0B}
+.bdg-bl{background:#E6F1FB;color:#185FA5}
+.bdg-pu{background:#EEEDFE;color:#3C3489}
+.bdg-te{background:#E1F5EE;color:#085041}
+
+/* CONTACT TABLE specific */
+.copy-btn{font-size:9px;padding:2px 6px;border-radius:4px;border:.5px solid var(--bd2);background:transparent;color:var(--mu);cursor:pointer;font-family:var(--mo)}
+.copy-btn:hover{color:var(--gr);border-color:rgba(34,201,122,.4)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">CART <b>CONVERSION</b> <b style="color:var(--pu)">v2</b></div>
+  <div id="file-status">
+    <span class="fs-pill" id="fp-csv">CSV: chua co</span>
+    <span class="fs-pill" id="fp-xlsx">XLSX: chua co (tuy chon)</span>
+  </div>
+  <div class="hbtns">
+    <button class="rbtn export" id="btn-export" onclick="exportHTML()">&#8595; Xuat HTML</button>
+    <button class="rbtn" onclick="resetDash()">&#8593; Reset</button>
+  </div>
+</header>
+
+<div id="up">
+  <div class="up-grid">
+    <!-- CSV -->
+    <div class="dz" id="dz-csv"
+      ondragover="event.preventDefault();this.classList.add('drag')"
+      ondragleave="this.classList.remove('drag')"
+      ondrop="onDrop(event,'csv')">
+      <div class="dz-icon csv">&#128202;</div>
+      <div class="dz-t">File CSV</div>
+      <div class="dz-s">tracking_cart_order_export<br>Bat buoc — nen tang phan tich</div>
+      <label class="ulbl csv" for="fi-csv">Chon file CSV</label>
+      <input type="file" id="fi-csv" accept=".csv" style="display:none" onchange="loadCSV(this.files[0])">
+      <div class="dz-done-lbl" id="csv-lbl" style="display:none"></div>
+    </div>
+    <!-- XLSX -->
+    <div class="dz" id="dz-xlsx"
+      ondragover="event.preventDefault();this.classList.add('drag')"
+      ondragleave="this.classList.remove('drag')"
+      ondrop="onDrop(event,'xlsx')">
+      <div class="dz-icon xlsx">&#128209;</div>
+      <div class="dz-t">File XLSX</div>
+      <div class="dz-s">Checking_Cart_List<br>Tuy chon — them email, SDT, ten mien</div>
+      <label class="ulbl xlsx" for="fi-xlsx">Chon file XLSX</label>
+      <input type="file" id="fi-xlsx" accept=".xlsx,.xls" style="display:none" onchange="loadXLSX(this.files[0])">
+      <div class="dz-done-lbl" id="xlsx-lbl" style="display:none"></div>
+      <div class="dz-opt">Co the bo qua neu chi dung CSV</div>
+    </div>
+  </div>
+  <div class="up-note">
+    <div class="up-note-t">Cot bat buoc trong CSV</div>
+    <span class="ct">flg_success</span><span class="ct">revenue</span><span class="ct">product_type_name</span>
+    <span class="ct">timein_carlist</span><span class="ct">login_id</span><span class="ct">tracking_cart_id</span>
+    <span class="ct o">channel</span><span class="ct o">timein_success</span>
+    <div style="margin-top:10px" class="up-note-t">Cot trong XLSX (tu dong nhan dien)</div>
+    <span class="ct p">Ma KH (Login ID)</span><span class="ct p">Email tai khoan</span><span class="ct p">SDT</span>
+    <span class="ct p">Trang thai</span><span class="ct p">Dich vu + gia</span><span class="ct p">Tong tien cart list</span>
+    <span class="ct p">Thoi gian vao cart list</span><span class="ct p">uuid</span>
+  </div>
+  <button class="go-btn" id="go-btn" onclick="startRender()">Phan tich ngay</button>
+</div>
+
+<div id="ld"><div class="sp"></div><div class="ltx" id="ltx">Dang xu ly...</div></div>
+
+<div id="db">
+  <div id="err"></div>
+
+  <!-- JOIN STATUS BAR -->
+  <div id="join-bar" style="display:none">
+    <span class="jb-item">CSV: <b id="jb-csv">-</b> rows</span>
+    <span class="jb-sep">|</span>
+    <span class="jb-item">XLSX: <b id="jb-xlsx">-</b> rows</span>
+    <span class="jb-sep">|</span>
+    <span class="jb-item">Joined: <b id="jb-join" style="color:var(--gr)">-</b> rows</span>
+    <span class="jb-sep">|</span>
+    <span class="jb-item">Khach vang lai (XLSX): <b id="jb-anon" style="color:var(--pu)">-</b></span>
+    <span class="jb-sep">|</span>
+    <span class="jb-item">Chua thanh toan: <b id="jb-pending" style="color:var(--am)">-</b></span>
+  </div>
+
+  <!-- KPI ROW -->
+  <div class="kg">
+    <div class="kc"><div class="kl">Tong su kien CSV</div><div class="kv" style="color:var(--bl)" id="k1">-</div><div class="ks" id="k1s">-</div></div>
+    <div class="kc"><div class="kl">Da thanh toan</div><div class="kv" style="color:var(--gr)" id="k2">-</div><div class="ks">flg_success=1</div></div>
+    <div class="kc"><div class="kl">Bo gio hang</div><div class="kv" style="color:var(--rd)" id="k3">-</div><div class="ks">flg_success=0</div></div>
+    <div class="kc"><div class="kl">Ty le chuyen doi</div><div class="kv" style="color:var(--am)" id="k4">-</div><div class="ks">Overall CR</div></div>
+    <div class="kc"><div class="kl">Doanh thu bo lo</div><div class="kv" style="color:var(--rd)" id="k5">-</div><div class="ks" id="k5s">-</div></div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tb">
+    <button class="tbtn on" onclick="goTab('trend',this)">Xu huong</button>
+    <button class="tbtn" onclick="goTab('product',this)">San pham</button>
+    <button class="tbtn" onclick="goTab('channel',this)">Kenh</button>
+    <button class="tbtn" onclick="goTab('hour',this)">Gio &amp; Ngay</button>
+    <button class="tbtn" onclick="goTab('revenue',this)">Gia tri don</button>
+    <button class="tbtn" onclick="goTab('user',this)">Phan khuc KH</button>
+    <button class="tbtn" onclick="goTab('cart',this)">Gio hang</button>
+    <button class="tbtn" onclick="goTab('telesales',this)">Telesales</button>
+    <button class="tbtn" onclick="goTab('contact',this)">Contact Recovery<span class="new">XLSX</span></button>
+    <button class="tbtn" onclick="goTab('domain',this)">Ten mien<span class="new">XLSX</span></button>
+    <button class="tbtn" onclick="goTab('anon',this)">Khach vang lai<span class="new">XLSX</span></button>
+    <button class="tbtn" onclick="goTab('pending',this)">Chua TT<span class="new">XLSX</span></button>
+    <button class="tbtn" onclick="goTab('hosting',this)">&#127968; Hosting</button>
+    <button class="tbtn" onclick="goTab('action',this)">Action plan</button>
+  </div>
+
+  <!-- TAB: TREND -->
+  <div id="tp-trend" class="tp on">
+    <div class="cc"><div class="ct2">Xu huong chuyen doi theo ngay</div><div class="cw" style="height:250px"><canvas id="c-trend" role="img" aria-label="Xu huong chuyen doi theo ngay"></canvas></div></div>
+    <div class="g3">
+      <div class="cc nm"><div class="ct2">Top 5 ngay CR cao</div><div id="best-days"></div></div>
+      <div class="cc nm"><div class="ct2">Top 5 ngay CR thap</div><div id="worst-days"></div></div>
+      <div class="cc nm"><div class="ct2">CR theo thu trong tuan</div><div class="cw" style="height:140px"><canvas id="c-dow" role="img" aria-label="CR theo thu trong tuan"></canvas></div></div>
+    </div>
+  </div>
+
+  <!-- TAB: PRODUCT -->
+  <div id="tp-product" class="tp">
+    <div class="g2">
+      <div class="cc nm"><div class="ct2">CR theo san pham</div><div id="prod-cr"></div></div>
+      <div class="cc nm"><div class="ct2">Doanh thu bo lo theo san pham</div><div id="prod-rev"></div></div>
+    </div>
+    <div class="cc" style="margin-top:11px"><div class="ct2">Ma tran uu tien — X: revenue bo lo, Y: CR%, kich co = volume</div><div class="cw" style="height:270px"><canvas id="c-bubble" role="img" aria-label="Ma tran uu tien san pham"></canvas></div></div>
+  </div>
+
+  <!-- TAB: CHANNEL -->
+  <div id="tp-channel" class="tp">
+    <div class="g2">
+      <div class="cc nm"><div class="ct2">CR theo kenh</div><div class="cw" style="height:200px"><canvas id="c-ch-cr" role="img" aria-label="CR theo kenh"></canvas></div></div>
+      <div class="cc nm"><div class="ct2">Volume theo kenh</div><div class="cw" style="height:200px"><canvas id="c-ch-vol" role="img" aria-label="Volume theo kenh"></canvas></div></div>
+    </div>
+    <div class="cc" style="margin-top:11px"><div class="ct2">Chi tiet tung kenh</div><div id="ch-det"></div></div>
+  </div>
+
+  <!-- TAB: HOUR -->
+  <div id="tp-hour" class="tp">
+    <div class="cc"><div class="ct2">Volume theo gio trong ngay</div><div class="cw" style="height:200px"><canvas id="c-hv" role="img" aria-label="Volume theo gio trong ngay"></canvas></div></div>
+    <div class="cc"><div class="ct2">CR theo gio trong ngay</div><div class="cw" style="height:160px"><canvas id="c-hcr" role="img" aria-label="CR theo gio trong ngay"></canvas></div></div>
+    <div class="pills" id="h-pills"></div>
+  </div>
+
+  <!-- TAB: REVENUE -->
+  <div id="tp-revenue" class="tp">
+    <div class="g2">
+      <div class="cc nm"><div class="ct2">CR theo nhom gia tri don</div><div class="cw" style="height:200px"><canvas id="c-rcr" role="img" aria-label="CR theo nhom gia tri don"></canvas></div></div>
+      <div class="cc nm"><div class="ct2">Tiem nang phuc hoi 5%/10%</div><div class="cw" style="height:200px"><canvas id="c-rrec" role="img" aria-label="Tiem nang phuc hoi"></canvas></div></div>
+    </div>
+    <div class="cc" style="margin-top:11px"><div class="ct2">Thoi gian tu vao gio den thanh toan</div><div id="time-st"></div></div>
+  </div>
+
+  <!-- TAB: USER SEGMENT -->
+  <div id="tp-user" class="tp">
+    <div class="g2">
+      <div class="cc nm"><div class="ct2">CR theo tan suat mua</div><div class="cw" style="height:200px"><canvas id="c-scr" role="img" aria-label="CR theo tan suat mua"></canvas></div></div>
+      <div class="cc nm"><div class="ct2">Gio bi bo theo phan khuc</div><div class="cw" style="height:200px"><canvas id="c-sab" role="img" aria-label="Gio bi bo theo phan khuc"></canvas></div></div>
+    </div>
+    <div class="cc" style="margin-top:11px">
+      <div class="ct2">Loc user theo phan khuc</div>
+      <div class="frow">
+        <span class="flab">Min revenue bo lo:</span>
+        <input class="fi" type="number" id="minrev" placeholder="0" style="width:90px" oninput="renderUserRevTable()">
+        <span class="flab">Phan khuc:</span>
+        <select class="fi" id="segfil" onchange="renderUserRevTable()">
+          <option value="">Tat ca</option><option value="Moi">Moi</option><option value="Thinh">Thinh thoang</option><option value="Thuong">Thuong xuyen</option><option value="Power">Power</option>
+        </select>
+      </div>
+      <div id="urv-wrap"></div>
+    </div>
+  </div>
+
+  <!-- TAB: CART -->
+  <div id="tp-cart" class="tp">
+    <div class="g2">
+      <div class="cc nm"><div class="ct2">CR theo so san pham trong gio</div><div class="cw" style="height:200px"><canvas id="c-cart-cr" role="img" aria-label="CR theo so san pham trong gio"></canvas></div></div>
+      <div class="cc nm"><div class="ct2">Volume theo so san pham</div><div class="cw" style="height:200px"><canvas id="c-cart-vol" role="img" aria-label="Volume theo so san pham"></canvas></div></div>
+    </div>
+    <div class="cc" style="margin-top:11px"><div class="ct2">Cap san pham hay di cung nhau (top combo)</div><div id="combo-det"></div></div>
+  </div>
+
+  <!-- TAB: TELESALES -->
+  <div id="tp-telesales" class="tp">
+    <div class="g4" id="ts-kpi"></div>
+    <div class="cc">
+      <div class="ct2">Danh sach telesales — user co revenue bo lo lon nhat</div>
+      <div class="frow">
+        <input class="fi" id="ts-search" placeholder="Tim login_id..." style="width:130px" oninput="renderTSTable()">
+        <span class="flab">Min revenue:</span>
+        <input class="fi" type="number" id="ts-minrev" value="1000000" style="width:100px" oninput="renderTSTable()">
+        <span class="flab">Hien:</span>
+        <input class="fi" type="number" id="ts-limit" value="1000" style="width:55px" oninput="renderTSTable()">
+      </div>
+      <div class="tbl-wrap tbl-scroll" id="ts-wrap"></div>
+      <div style="margin-top:6px;font-size:10px;color:var(--mu)" id="ts-count"></div>
+    </div>
+  </div>
+
+  <!-- TAB: CONTACT RECOVERY (XLSX) -->
+  <div id="tp-contact" class="tp">
+    <div class="cc">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:11px">
+        <div class="ct2" style="margin-bottom:0">Danh sach contact co the lien he — tu XLSX</div>
+        <span class="bdg bdg-pu">XLSX required</span>
+      </div>
+      <div id="contact-empty" style="display:none;font-size:12px;color:var(--mu);padding:20px 0">Can upload file XLSX de xem tab nay.</div>
+      <div id="contact-content" style="display:none">
+        <div class="g4" id="ct-kpi"></div>
+        <div class="frow">
+          <span class="flab">Loc trang thai:</span>
+          <select class="fi" id="ct-status" onchange="renderContactTable()">
+            <option value="">Tat ca</option>
+            <option value="bo">Bo gio (empty)</option>
+            <option value="chua">Chua thanh toan</option>
+            <option value="da">Da thanh toan</option>
+          </select>
+          <span class="flab">Co SDT:</span>
+          <select class="fi" id="ct-phone" onchange="renderContactTable()">
+            <option value="">Tat ca</option>
+            <option value="yes">Co SDT</option>
+            <option value="no">Khong co SDT</option>
+          </select>
+          <span class="flab">Tim:</span>
+          <input class="fi" id="ct-search" placeholder="email / SDT / login..." style="width:130px" oninput="renderContactTable()">
+          <button class="rbtn" onclick="copyContactCSV()" style="border-color:rgba(34,201,122,.4);color:var(--gr);font-size:10px">Export CSV</button>
+        </div>
+        <div class="tbl-wrap tbl-scroll" id="ct-wrap"></div>
+        <div style="margin-top:6px;font-size:10px;color:var(--mu)" id="ct-count"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: DOMAIN (XLSX) -->
+  <div id="tp-domain" class="tp">
+    <div class="cc">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:11px">
+        <div class="ct2" style="margin-bottom:0">Phan tich theo duoi ten mien — tu XLSX</div>
+        <span class="bdg bdg-pu">XLSX required</span>
+      </div>
+      <div id="domain-empty" style="display:none;font-size:12px;color:var(--mu);padding:20px 0">Can upload file XLSX de xem tab nay.</div>
+      <div id="domain-content" style="display:none">
+        <div class="g2">
+          <div><div class="ct2">CR theo duoi ten mien</div><div id="domain-cr"></div></div>
+          <div><div class="ct2">Volume va revenue bo lo theo duoi</div><div id="domain-rev"></div></div>
+        </div>
+        <div class="cc nm" style="margin-top:11px"><div class="ct2">Top combo san pham theo duoi ten mien</div><div id="domain-combo"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: ANON (XLSX) -->
+  <div id="tp-anon" class="tp">
+    <div class="cc">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:11px">
+        <div class="ct2" style="margin-bottom:0">Khach vang lai (null login) — tu XLSX</div>
+        <span class="bdg bdg-pu">XLSX required</span>
+      </div>
+      <div id="anon-empty" style="display:none;font-size:12px;color:var(--mu);padding:20px 0">Can upload file XLSX de xem tab nay.</div>
+      <div id="anon-content" style="display:none">
+        <div class="g4" id="anon-kpi"></div>
+        <div class="g2" style="margin-top:11px">
+          <div class="cc nm"><div class="ct2">San pham hay bo gio boi khach vang lai</div><div id="anon-prod"></div></div>
+          <div class="cc nm"><div class="ct2">Phan bo theo gio trong ngay</div><div class="cw" style="height:200px"><canvas id="c-anon-h" role="img" aria-label="Khach vang lai theo gio"></canvas></div></div>
+        </div>
+        <div class="cc" style="margin-top:11px"><div class="ct2">Gmail co the remarketing (null login nhung co gmail)</div><div class="tbl-wrap tbl-scroll" id="anon-gmail"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: PENDING (XLSX) -->
+  <div id="tp-pending" class="tp">
+    <div class="cc">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:11px">
+        <div class="ct2" style="margin-bottom:0">Don "Chua thanh toan" — da tao don nhung chua tra tien</div>
+        <span class="bdg bdg-pu">XLSX required</span>
+      </div>
+      <div id="pending-empty" style="display:none;font-size:12px;color:var(--mu);padding:20px 0">Can upload file XLSX de xem tab nay.</div>
+      <div id="pending-content" style="display:none">
+        <div class="g4" id="pend-kpi"></div>
+        <div class="cc" style="margin-top:11px"><div class="ct2">Danh sach don chua thanh toan — can follow-up ngay</div><div class="tbl-wrap tbl-scroll" id="pend-tbl"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: HOSTING -->
+  <div id="tp-hosting" class="tp">
+    <!-- KPI row -->
+    <div class="g4" id="hs-kpi"></div>
+    <div class="g2">
+      <!-- CR theo goi hosting -->
+      <div class="cc nm">
+        <div class="ct2">CR theo loai hosting (CSV)</div>
+        <div id="hs-plan-cr"></div>
+      </div>
+      <!-- Revenue bo lo -->
+      <div class="cc nm">
+        <div class="ct2">Doanh thu bo lo theo loai</div>
+        <div id="hs-plan-rev"></div>
+      </div>
+    </div>
+    <div class="cc" style="margin-top:11px">
+      <div class="ct2">Xu huong CR hosting theo ngay</div>
+      <div class="cw" style="height:220px"><canvas id="c-hs-trend" role="img" aria-label="Xu huong CR hosting theo ngay"></canvas></div>
+    </div>
+    <div class="g2" style="margin-top:11px">
+      <div class="cc nm">
+        <div class="ct2">CR hosting theo gio trong ngay</div>
+        <div class="cw" style="height:200px"><canvas id="c-hs-hour" role="img" aria-label="CR hosting theo gio"></canvas></div>
+      </div>
+      <div class="cc nm">
+        <div class="ct2">CR hosting theo gia tri don</div>
+        <div class="cw" style="height:200px"><canvas id="c-hs-rev" role="img" aria-label="CR hosting theo gia tri don"></canvas></div>
+      </div>
+    </div>
+    <div class="g2" style="margin-top:11px">
+      <div class="cc nm">
+        <div class="ct2">San pham hay mua kem voi Hosting</div>
+        <div id="hs-combo"></div>
+      </div>
+      <div class="cc nm">
+        <div class="ct2">CR hosting theo kenh traffic</div>
+        <div class="cw" style="height:200px"><canvas id="c-hs-ch" role="img" aria-label="CR hosting theo kenh"></canvas></div>
+      </div>
+    </div>
+    <!-- XLSX plan detail -->
+    <div class="cc" style="margin-top:11px" id="hs-xlsx-section">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:11px">
+        <div class="ct2" style="margin-bottom:0">Chi tiet goi hosting tu XLSX (ten goi cu the)</div>
+        <span class="bdg bdg-pu" id="hs-xlsx-badge">XLSX required</span>
+      </div>
+      <div id="hs-plan-detail"></div>
+    </div>
+    <!-- User behavior -->
+    <div class="cc" style="margin-top:11px">
+      <div class="ct2">Phan tich hanh vi user mua hosting</div>
+      <div class="g4" id="hs-user-kpi" style="margin-bottom:11px"></div>
+      <div class="g2">
+        <div>
+          <div class="ct2">CR theo tan suat vao gio (hosting users)</div>
+          <div class="cw" style="height:180px"><canvas id="c-hs-seg" role="img" aria-label="CR hosting theo phan khuc user"></canvas></div>
+        </div>
+        <div>
+          <div class="ct2">Top users hosting bo lo nhieu nhat</div>
+          <div class="tbl-wrap" id="hs-user-tbl"></div>
+        </div>
+      </div>
+    </div>
+    <!-- Insight box -->
+    <div class="cc" style="margin-top:11px;border-left:2px solid #f5a623;border-radius:0 11px 11px 0">
+      <div class="ct2">Key insights &amp; Goi y hanh dong</div>
+      <div id="hs-insights"></div>
+    </div>
+  </div>
+
+  <!-- TAB: ACTION -->
+  <div id="tp-action" class="tp">
+    <div class="al" id="act-list"></div>
+  </div>
+</div>
+
+<script>
+/* ────────── STATE ────────── */
+var CH={}, CSV_ROWS=[], XLSX_ROWS=[], JOINED=[], UMAP={}, TS_DATA=[], XLSX_LOADED=false;
+var PAL=['#4f8ef7','#22c97a','#f5a623','#7c5cbf','#f04f4f','#5dcaa5','#f093fb','#43e97b','#fa8231','#a29bfe'];
+
+/* ────────── FILE LOAD ────────── */
+function onDrop(e,t){e.preventDefault();document.getElementById('dz-'+t).classList.remove('drag');var f=e.dataTransfer.files[0];if(f){if(t==='csv')loadCSV(f);else loadXLSX(f);}}
+
+function loadCSV(file){
+  setLd(true,'Doc file CSV...');
+  Papa.parse(file,{header:true,skipEmptyLines:true,complete:function(r){
+    CSV_ROWS=r.data;
+    document.getElementById('csv-lbl').textContent=file.name+' ('+CSV_ROWS.length.toLocaleString()+' rows)';
+    document.getElementById('csv-lbl').style.display='block';
+    document.getElementById('dz-csv').classList.add('done');
+    document.getElementById('fp-csv').textContent='CSV: '+file.name;
+    document.getElementById('fp-csv').classList.add('ok');
+    checkReady();setLd(false);
+  },error:function(e){setLd(false);alert('Loi doc CSV: '+e.message);}});
+}
+
+function loadXLSX(file){
+  setLd(true,'Doc file XLSX...');
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var wb=XLSX.read(e.target.result,{type:'array'});
+      var ws=wb.Sheets[wb.SheetNames[0]];
+      XLSX_ROWS=XLSX.utils.sheet_to_json(ws,{header:1});
+      XLSX_LOADED=true;
+      document.getElementById('xlsx-lbl').textContent=file.name+' ('+(XLSX_ROWS.length-1).toLocaleString()+' rows)';
+      document.getElementById('xlsx-lbl').style.display='block';
+      document.getElementById('dz-xlsx').classList.add('done');
+      document.getElementById('fp-xlsx').textContent='XLSX: '+file.name;
+      document.getElementById('fp-xlsx').classList.add('ok');
+      checkReady();setLd(false);
+    }catch(err){setLd(false);alert('Loi doc XLSX: '+err.message);}
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function checkReady(){
+  var ready=CSV_ROWS.length>0;
+  var btn=document.getElementById('go-btn');
+  btn.classList.toggle('ready',ready);
+  btn.textContent=ready?(XLSX_LOADED?'Phan tich voi ca 2 file':'Phan tich chi voi CSV'):'Phan tich ngay';
+}
+
+/* ────────── UTILS ────────── */
+function fN(n){if(n>=1e9)return(n/1e9).toFixed(1)+' ty';if(n>=1e6)return(n/1e6).toFixed(0)+' tr';if(n>=1e3)return(n/1e3).toFixed(0)+'k';return Math.round(n)+'';}
+function fNd(n){if(n>=1e9)return(n/1e9).toFixed(2)+' ty';if(n>=1e6)return(n/1e6).toFixed(1)+' tr';if(n>=1e3)return(n/1e3).toFixed(0)+'k';return Math.round(n)+'';}
+function pdate(s){return(s&&String(s).trim())?new Date(s):null;}
+function crC(c){return c>=65?'#22c97a':c>=45?'#f5a623':'#f04f4f';}
+function setEl(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
+function setHtml(id,v){var e=document.getElementById(id);if(e)e.innerHTML=v;}
+function killCh(){Object.keys(CH).forEach(function(k){try{CH[k].destroy();}catch(e){}});CH={};}
+function mkC(id,cfg){var el=document.getElementById(id);if(!el)return;if(CH[id]){try{CH[id].destroy();}catch(e){}}CH[id]=new Chart(el,cfg);}
+function setLd(on,t){document.getElementById('ld').style.display=on?'flex':'none';if(t)document.getElementById('ltx').textContent=t;}
+function resetDash(){killCh();CSV_ROWS=[];XLSX_ROWS=[];JOINED=[];UMAP={};TS_DATA=[];XLSX_LOADED=false;
+  document.getElementById('db').style.display='none';document.getElementById('up').style.display='flex';
+  document.getElementById('fp-csv').textContent='CSV: chua co';document.getElementById('fp-csv').className='fs-pill';
+  document.getElementById('fp-xlsx').textContent='XLSX: chua co (tuy chon)';document.getElementById('fp-xlsx').className='fs-pill warn';
+  document.getElementById('fi-csv').value='';document.getElementById('fi-xlsx').value='';
+  document.getElementById('csv-lbl').style.display='none';document.getElementById('xlsx-lbl').style.display='none';
+  document.getElementById('dz-csv').classList.remove('done');document.getElementById('dz-xlsx').classList.remove('done');
+  document.getElementById('btn-export').style.display='none';document.getElementById('err').style.display='none';
+  checkReady();}
+
+function mkBars(items,lblFn,valFn,maxV,dispFn,colFn,defC){
+  var out='';
+  items.forEach(function(x){
+    var col=colFn?colFn(x):(defC||'#4f8ef7');
+    var w=Math.min(100,Math.max(0,maxV>0?valFn(x)/maxV*100:0));
+    out+='<div class="hb"><span class="hl" title="'+lblFn(x)+'">'+lblFn(x)+'</span><div class="ht"><div class="hf" style="width:'+w.toFixed(1)+'%;background:'+col+'"></div></div><span class="hv" style="color:'+col+'">'+dispFn(x)+'</span></div>';
+  });
+  return out;
+}
+
+/* ────────── JOIN LOGIC ────────── */
+function buildJoin(){
+  /* Parse CSV */
+  var csvParsed=[];
+  CSV_ROWS.forEach(function(r){
+    var tin=pdate(r.timein_carlist);
+    if(!tin)return;
+    csvParsed.push({
+      ok:parseInt(r.flg_success)||0,
+      rev:parseFloat(r.revenue)||0,
+      prod:(r.product_type_name||'Unknown').trim(),
+      chan:((r.channel||'').trim())||'(Truc tiep)',
+      user:(r.login_id||'').trim(),
+      cart:(r.tracking_cart_id||'').trim(),
+      tin:tin,tpay:pdate(r.timein_success),
+      h:tin.getHours(),dow:tin.getDay(),
+      date:tin.toISOString().slice(0,10),
+      /* XLSX fields (filled after join) */
+      email:'',phone:'',gmail:'',orderId:'',status:'',serviceStr:'',totalCart:0
+    });
+  });
+
+  if(!XLSX_LOADED||XLSX_ROWS.length<2){JOINED=csvParsed;return 0;}
+
+  /* Normalize Vietnamese string: bo dau, lowercase, trim */
+  function normVi(s){
+    if(!s)return '';
+    var r=String(s).toLowerCase();
+    /* convert via charCodeAt range check is unreliable; use indexOf map */
+    var map=[
+      ['a',['à','á','ạ','ả','ã','â','ầ','ấ','ậ','ẩ','ẫ','ă','ằ','ắ','ặ','ẳ','ẵ']],
+      ['e',['è','é','ẹ','ẻ','ẽ','ê','ề','ế','ệ','ể','ễ']],
+      ['i',['ì','í','ị','ỉ','ĩ']],
+      ['o',['ò','ó','ọ','ỏ','õ','ô','ồ','ố','ộ','ổ','ỗ','ơ','ờ','ớ','ợ','ở','ỡ']],
+      ['u',['ù','ú','ụ','ủ','ũ','ư','ừ','ứ','ự','ử','ữ']],
+      ['y',['ỳ','ý','ỵ','ỷ','ỹ']],
+      ['d',['đ']]
+    ];
+    map.forEach(function(m){m[1].forEach(function(ch){while(r.indexOf(ch)>=0)r=r.replace(ch,m[0]);});});
+    return r.replace(/\s+/g,' ').trim();
+  }
+
+  /* isNull: gia tri null/rong */
+  function isNull(v){var s=String(v||'').trim().toLowerCase();return s===''||s==='null'||s==='none'||s==='undefined';}
+
+  /* Parse revenue: '489.000' -> 489000 */
+  function parseRev(v){
+    if(!v||isNull(v))return 0;
+    /* Viet Nam format: dau cham la phan nghin, dau phay la thap phan */
+    var s=String(v).trim().replace(/\./g,'').replace(',','.');
+    return parseFloat(s)||0;
+  }
+
+  /* Parse XLSX header bang normVi */
+  var hdr=XLSX_ROWS[0].map(function(h){return normVi(h);});
+  var ci={login:-1,email:-1,phone:-1,gmail:-1,order:-1,status:-1,svc:-1,totalCart:-1,tin:-1,uuid:-1};
+  hdr.forEach(function(hl,i){
+    /* Dung index cu the neu match chinh xac */
+    if(ci.login<0 && hl.includes('login'))ci.login=i;
+    if(ci.email<0 && hl.includes('email') && !hl.includes('gmail'))ci.email=i;
+    if(ci.phone<0 && (hl==='sdt'||hl.includes('so dien thoai')||hl.includes('phone')))ci.phone=i;
+    if(ci.gmail<0 && hl.includes('gmail'))ci.gmail=i;
+    if(ci.order<0 && (hl.includes('don hang')||hl.includes('ma don')||hl.includes('order')))ci.order=i;
+    if(ci.status<0 && (hl.includes('trang thai')||hl.includes('status')))ci.status=i;
+    /* svc: uu tien cot cart (cot 9), tranh match cot success (cot 13) */
+    if(ci.svc<0 && hl.includes('dich vu') && hl.includes('cart'))ci.svc=i;
+    if(ci.totalCart<0 && hl.includes('tong tien') && hl.includes('cart'))ci.totalCart=i;
+    if(ci.tin<0 && hl.includes('vao') && hl.includes('cart'))ci.tin=i;
+    if(ci.uuid<0 && hl==='uuid')ci.uuid=i;
+  });
+  /* Fallback: neu header khong match duoc, dung index mac dinh cua file Checking_Cart_List */
+  if(ci.login<0)ci.login=1;
+  if(ci.email<0)ci.email=2;
+  if(ci.phone<0)ci.phone=3;
+  if(ci.order<0)ci.order=4;
+  if(ci.gmail<0)ci.gmail=5;
+  if(ci.tin<0)ci.tin=6;
+  if(ci.status<0)ci.status=8;
+  if(ci.svc<0)ci.svc=9;
+  if(ci.totalCart<0)ci.totalCart=10;
+  if(ci.uuid<0)ci.uuid=15;
+
+  /* Build XLSX map by login+time key */
+  var xlsxMap={};
+  var xlsxAll=[];
+  XLSX_ROWS.slice(1).forEach(function(r){
+    var login=String(r[ci.login]||'').trim();
+    var tinStr=String(r[ci.tin]||'').trim();
+    var email=String(r[ci.email]||'').trim();
+    var phone=String(r[ci.phone]||'').trim();
+    var gmail=String(r[ci.gmail]||'').trim();
+    var orderId=String(r[ci.order]||'').trim();
+    var status=String(r[ci.status]||'').trim();
+    var svc=String(r[ci.svc]||'').trim();
+    var totalCart=parseRev(r[ci.totalCart]);
+    /* Chuan hoa: thay 'null' string bang rong */
+    if(isNull(login))login='';
+    if(isNull(email))email='';
+    if(isNull(phone))phone='';
+    if(isNull(gmail))gmail='';
+    if(isNull(orderId))orderId='';
+    if(isNull(svc))svc='';
+    var key=login+'|'+tinStr.slice(0,16);
+    var obj={login:login,email:email,phone:phone,gmail:gmail,orderId:orderId,status:status,svc:svc,totalCart:totalCart,tinStr:tinStr,key:key};
+    if(!xlsxMap[key])xlsxMap[key]=obj;
+    xlsxAll.push(obj);
+  });
+
+  /* Join */
+  var matched=0;
+  csvParsed.forEach(function(r){
+    var key=r.user+'|'+r.tin.toISOString().slice(0,16).replace('T',' ');
+    var xr=xlsxMap[key];
+    if(xr){
+      r.email=xr.email;r.phone=xr.phone;r.gmail=xr.gmail;
+      r.orderId=xr.orderId;r.status=xr.status;r.serviceStr=xr.svc;r.totalCart=xr.totalCart;
+      matched++;
+    }
+  });
+
+  JOINED=csvParsed;
+
+  /* Store XLSX all rows for anon/pending/domain/contact tabs */
+  window.XLSX_ALL=xlsxAll;
+
+  /* Update join bar */
+  var anon=xlsxAll.filter(function(r){return!r.login||r.login==='';}).length;
+  var pending=xlsxAll.filter(function(r){return r.status&&(r.status.includes('Chua')||r.status.includes('Chưa'));}).length;
+  document.getElementById('join-bar').style.display='flex';
+  setEl('jb-csv',CSV_ROWS.length.toLocaleString());
+  setEl('jb-xlsx',(XLSX_ROWS.length-1).toLocaleString());
+  setEl('jb-join',matched.toLocaleString());
+  setEl('jb-anon',anon.toLocaleString());
+  setEl('jb-pending',pending.toLocaleString());
+
+  return matched;
+}
+
+/* ────────── RENDER ENTRY ────────── */
+function startRender(){
+  if(CSV_ROWS.length===0)return;
+  setLd(true,'Dang xu ly...');
+  setTimeout(function(){
+    try{
+      killCh();
+      buildJoin();
+      render();
+      document.getElementById('up').style.display='none';
+      document.getElementById('db').style.display='block';
+      document.getElementById('btn-export').style.display='inline-block';
+      setLd(false);
+    }catch(e){setLd(false);var eb=document.getElementById('err');eb.textContent='Loi: '+e.message;eb.style.display='block';console.error(e);}
+  },60);
+}
+
+function render(){
+  var rows=JOINED;
+  var paid=rows.filter(function(r){return r.ok===1;});
+  var ab=rows.filter(function(r){return r.ok===0;});
+  var cr=rows.length?paid.length/rows.length*100:0;
+  var rl=ab.reduce(function(s,r){return s+r.rev;},0);
+  var dts=rows.map(function(r){return r.tin;}).sort(function(a,b){return a-b;});
+  var rng=dts.length?dts[0].toLocaleDateString('vi')+' - '+dts[dts.length-1].toLocaleDateString('vi'):'-';
+
+  /* Build UMAP */
+  UMAP={};
+  rows.forEach(function(r){
+    if(!UMAP[r.user])UMAP[r.user]={events:0,paid:0,rl:0,prods:{},email:r.email,phone:r.phone,firstDate:r.date};
+    var u=UMAP[r.user];u.events++;
+    if(r.ok===1)u.paid++;else u.rl+=r.rev;
+    u.prods[r.prod]=(u.prods[r.prod]||0)+1;
+    if(!u.email&&r.email)u.email=r.email;
+    if(!u.phone&&r.phone)u.phone=r.phone;
+  });
+
+  setEl('k1',rows.length.toLocaleString());setEl('k1s',rng);
+  setEl('k2',paid.length.toLocaleString());
+  setEl('k3',ab.length.toLocaleString());
+  setEl('k4',cr.toFixed(1)+'%');
+  setEl('k5',fN(rl));setEl('k5s','Recover 10% = '+fN(rl*.1));
+
+  bTrend(rows);bProduct(rows);bChannel(rows);bHour(rows);bRevenue(rows);
+  bUser(rows);bCart(rows);bTelesales();bHosting(rows);bAction(rows,paid,ab,rl);
+
+  if(XLSX_LOADED&&window.XLSX_ALL){
+    bContact();bDomain();bAnon();bPending();
+  } else {
+    ['contact','domain','anon','pending'].forEach(function(t){
+      setHtml(t+'-empty','Can upload file XLSX de xem tab nay.');
+      var ee=document.getElementById(t+'-empty');if(ee)ee.style.display='block';
+      var ec=document.getElementById(t+'-content');if(ec)ec.style.display='none';
+    });
+  }
+}
+
+/* ────────── TREND ────────── */
+function bTrend(rows){
+  var bd={};
+  rows.forEach(function(r){if(!bd[r.date])bd[r.date]={p:0,a:0};r.ok===1?bd[r.date].p++:bd[r.date].a++;});
+  var dk=Object.keys(bd).sort();
+  var pa=dk.map(function(d){return bd[d].p;}),aa=dk.map(function(d){return bd[d].a;});
+  var ca=dk.map(function(d){var t=bd[d].p+bd[d].a;return t?+(bd[d].p/t*100).toFixed(1):0;});
+  mkC('c-trend',{data:{labels:dk.map(function(d){return d.slice(5);}),datasets:[
+    {type:'bar',label:'Thanh toan',data:pa,backgroundColor:'#4f8ef7',stack:'s'},
+    {type:'bar',label:'Bo gio',data:aa,backgroundColor:'rgba(240,79,79,.35)',stack:'s'},
+    {type:'line',label:'CR%',data:ca,borderColor:'#22c97a',backgroundColor:'transparent',pointRadius:2,yAxisID:'y2',borderWidth:1.5,order:0}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index'}},
+    scales:{x:{stacked:true,ticks:{font:{size:9},color:'#6b7280',maxTicksLimit:18,maxRotation:45},grid:{color:'rgba(255,255,255,.04)'}},
+      y:{stacked:true,ticks:{font:{size:9},color:'#6b7280',callback:function(v){return v>=1000?(v/1000).toFixed(0)+'k':v;}},grid:{color:'rgba(255,255,255,.04)'}},
+      y2:{position:'right',min:0,max:100,ticks:{font:{size:9},color:'#22c97a',callback:function(v){return v+'%';}},grid:{display:false}}}}});
+  var da=dk.map(function(d,i){return{d:d.slice(5),cr:ca[i],tot:pa[i]+aa[i]};}).filter(function(x){return x.tot>=5;});
+  da.sort(function(a,b){return b.cr-a.cr;});
+  setHtml('best-days',mkBars(da.slice(0,5),function(x){return x.d;},function(x){return x.cr;},100,function(x){return x.cr.toFixed(1)+'%';},null,'#22c97a'));
+  setHtml('worst-days',mkBars(da.slice(-5).reverse(),function(x){return x.d;},function(x){return x.cr;},100,function(x){return x.cr.toFixed(1)+'%';},null,'#f04f4f'));
+  var dn=['CN','T2','T3','T4','T5','T6','T7'],dd=Array.from({length:7},function(){return{p:0,t:0};});
+  rows.forEach(function(r){dd[r.dow].t++;if(r.ok===1)dd[r.dow].p++;});
+  var dc=dd.map(function(d){return d.t?+(d.p/d.t*100).toFixed(1):0;});
+  mkC('c-dow',{type:'bar',data:{labels:dn,datasets:[{label:'CR%',data:dc,backgroundColor:dc.map(crC),borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.parsed.y+'%';}}}},
+      scales:{x:{ticks:{font:{size:9},color:'#6b7280'},grid:{display:false}},y:{ticks:{font:{size:9},color:'#6b7280',callback:function(v){return v+'%';}},grid:{color:'rgba(255,255,255,.04)'}}}}});
+}
+
+/* ────────── PRODUCT ────────── */
+function bProduct(rows){
+  var mp={};
+  rows.forEach(function(r){if(!mp[r.prod])mp[r.prod]={p:0,t:0,rl:0};mp[r.prod].t++;if(r.ok===1)mp[r.prod].p++;else mp[r.prod].rl+=r.rev;});
+  var prods=Object.keys(mp).filter(function(k){return mp[k].t>=5;}).map(function(k){var v=mp[k];return{name:k,cr:v.t?v.p/v.t*100:0,tot:v.t,rl:v.rl};});
+  var byCR=prods.slice().sort(function(a,b){return b.cr-a.cr;});
+  var byRev=prods.slice().sort(function(a,b){return b.rl-a.rl;}).slice(0,15);
+  var mxRL=Math.max.apply(null,byRev.map(function(p){return p.rl;}))||1;
+  setHtml('prod-cr',mkBars(byCR,function(x){return x.name.slice(0,15);},function(x){return x.cr;},100,function(x){return x.cr.toFixed(0)+'%';},function(x){return crC(x.cr);}));
+  setHtml('prod-rev',mkBars(byRev,function(x){return x.name.slice(0,15);},function(x){return x.rl/mxRL*100;},100,function(x){return fN(x.rl);},null,'#f04f4f'));
+  var bc=prods.map(function(p){return p.cr<30?'rgba(240,79,79,.7)':p.cr<55?'rgba(245,166,35,.7)':'rgba(34,201,122,.7)';});
+  mkC('c-bubble',{type:'bubble',data:{datasets:[{data:prods.map(function(p){return{x:+(p.rl/1e6).toFixed(1),y:+p.cr.toFixed(1),r:Math.max(5,Math.min(24,Math.sqrt(p.tot)/3))};}),backgroundColor:bc,borderColor:bc.map(function(c){return c.replace('.7','.95');}),borderWidth:.5}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){var p=prods[ctx.dataIndex];return p.name+' CR:'+p.cr.toFixed(1)+'% Bo lo:'+fN(p.rl);}}}},
+      scales:{x:{title:{display:true,text:'Revenue bo lo (trieu)',color:'#6b7280',font:{size:9}},ticks:{font:{size:9},color:'#6b7280'},grid:{color:'rgba(255,255,255,.04)'}},
+        y:{title:{display:true,text:'CR%',color:'#6b7280',font:{size:9}},min:0,max:100,ticks:{font:{size:9},color:'#6b7280',callback:function(v){return v+'%';}},grid:{color:'rgba(255,255,255,.04)'}}}}});
+}
+
+/* ────────── CHANNEL ────────── */
+function bChannel(rows){
+  var mc={};
+  rows.forEach(function(r){if(!mc[r.chan])mc[r.chan]={p:0,t:0,rl:0};mc[r.chan].t++;if(r.ok===1)mc[r.chan].p++;else mc[r.chan].rl+=r.rev;});
+  var chs=Object.keys(mc).map(function(k){var v=mc[k];return{name:k,cr:v.t?+(v.p/v.t*100).toFixed(1):0,tot:v.t,paid:v.p,rl:v.rl};}).sort(function(a,b){return b.tot-a.tot;});
+  mkC('c-ch-cr',{type:'bar',data:{labels:chs.map(function(c){return c.name;}),datasets:[{label:'CR%',data:chs.map(function(c){return c.cr;}),backgroundColor:chs.map(function(c,i){return PAL[i%PAL.length];}),borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.parsed.y+'%';}}}},
+      scales:{x:{ticks:{font:{size:9},color:'#6b7280'},grid:{display:false}},y:{min:0,max:105,ticks:{font:{size:9},color:'#6b7280',callback:function(v){return v+'%';}},grid:{color:'rgba(255,255,255,.04)'}}}}});
+  mkC('c-ch-vol',{type:'doughnut',data:{labels:chs.map(function(c){return c.name;}),datasets:[{data:chs.map(function(c){return c.tot;}),backgroundColor:chs.map(function(c,i){return PAL[i%PAL.length];}),borderWidth:1,borderColor:'#13161d'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:9},color:'#6b7280',padding:6,boxWidth:8}}},cutout:'56%'}});
+  var det='';
+  chs.forEach(function(c,i){var col=PAL[i%PAL.length];
+    det+='<div class="hb" style="margin-bottom:9px"><span class="hl">'+c.name+'</span><div style="flex:1"><div style="display:flex;align-items:center;gap:5px;margin-bottom:2px"><div class="ht" style="flex:1"><div class="hf" style="width:'+c.cr+'%;background:'+col+'"></div></div><span style="font-family:var(--mo);font-size:10px;color:'+col+'">'+c.cr+'%</span></div><span style="font-size:9px;color:var(--mu)">'+c.paid.toLocaleString()+'/'+c.tot.toLocaleString()+' - Bo lo: '+fN(c.rl)+'</span></div></div>';
+  });
+  setHtml('ch-det',det);
+}
+
+/* ────────── HOUR ────────── */
+function bHour(rows){
+  var hd=Array.from({length:24},function(){return{p:0,t:0};});
+  rows.forEach(function(r){hd[r.h].t++;if(r.ok===1)hd[r.h].p++;});
+  var hrs=Array.from({length:24},function(_,i){return i+'h';});
+  var pa=hd.map(function(d){return d.p;}),aa=hd.map(function(d){return d.t-d.p;}),ca=hd.map(function(d){return d.t?+(d.p/d.t*100).toFixed(1):0;});
+  mkC('c-hv',{type:'bar',data:{labels:hrs,datasets:[{label:'Thanh toan',data:pa,backgroundColor:'#4f8ef7',stack:'s'},{label:'Bo gio',data:aa,backgroundColor:'rgba(240,79,79,.35)',stack:'s'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{stacked:true,ticks:{font:{size:8},color:'#6b7280',autoSkip:false},grid:{display:false}},y:{stacked:true,ticks:{font:{size:9},color:'#6b7280'},grid:{color:'rgba(255,255,255,.04)'}}}}});
+  mkC('c-hcr',{type:'line',data:{labels:hrs,datasets:[{label:'CR%',data:ca,borderColor:'#22c97a',backgroundColor:'rgba(34,201,122,.08)',fill:true,pointRadius:2,borderWidth:1.5,tension:.3}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.parsed.y+'%';}}}},
+      scales:{x:{ticks:{font:{size:8},color:'#6b7280',autoSkip:false},grid:{display:false}},y:{ticks:{font:{size:9},color:'#6b7280',callback:function(v){return v+'%';}},grid:{color:'rgba(255,255,255,.04)'}}}}});
+  var sv=ca.map(function(c,i){return{h:i,cr:c,vol:hd[i].t};}).filter(function(x){return x.vol>5;}).sort(function(a,b){return b.cr-a.cr;});
+  var best=sv.slice(0,3).map(function(x){return x.h+'h('+x.cr+'%)';}).join(' ');
+  var worst=sv.slice(-3).map(function(x){return x.h+'h('+x.cr+'%)';}).join(' ');
+  var pkV=hd.map(function(d,i){return{i:i,t:d.t};}).sort(function(a,b){return b.t-a.t;}).slice(0,3).map(function(x){return x.i+'h';}).join(' ');
+  setHtml('h-pills','<span class="pill good">CR cao: '+best+'</span> <span class="pill hot">CR thap: '+worst+'</span> <span class="pill warn">Volume cao: '+pkV+'</span>');
+}
+
+/* ────────── REVENUE ────────── */
+function bRevenue(rows){
+  var bkts=[{l:'<100k',mn:0,mx:1e5},{l:'100-300k',mn:1e5,mx:3e5},{l:'300-500k',mn:3e5,mx:5e5},{l:'500k-1M',mn:5e5,mx:1e6},{l:'>1M',mn:1e6,mx:Infinity}];
+  var bd=bkts.map(function(b){
+    var inn=rows.filter(function(r){return r.rev>=b.mn&&r.rev<b.mx;});
+    var pp=inn.filter(function(r){return r.ok===1;});
+    var rl=inn.filter(function(r){return r.ok===0;}).reduce(function(s,r){return s+r.rev;},0);
+    return{lbl:b.l,cr:inn.length?+(pp.length/inn.length*100).toFixed(1):0,n:inn.length,rl:rl};
+  });
+  mkC('c-rcr',{type:'bar',data:{labels:bd.map(function(b){return b.lbl;}),datasets:[{label:'CR%',data:bd.map(function(b){return b.cr;}),backgroundColor:bd.map(function(b){return crC(b.cr);}),borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.parsed.y+'%';}}}},
+      scales:{x:{ticks:{font:{size:9},color:'#6b7280'},grid:{display:false}},y:{min:0,max:100,ticks:{font:{size:9},color:'#6b7280',callback:function(v){return v+'%';}},grid:{color:'rgba(255,255,255,.04)'}}}}});
+  mkC('c-rrec',{type:'bar',data:{labels:bd.map(function(b){return b.lbl;}),datasets:[
+    {label:'Bo lo',data:bd.map(function(b){return+(b.rl/1e6).toFixed(1);}),backgroundColor:'rgba(240,79,79,.2)',borderColor:'#f04f4f',borderWidth:1},
+    {label:'5%',data:bd.map(function(b){return+(b.rl/1e6*.05).toFixed(1);}),backgroundColor:'#f5a623',borderRadius:3},
+    {label:'10%',data:bd.map(function(b){return+(b.rl/1e6*.1).toFixed(1);}),backgroundColor:'#22c97a',borderRadius:3}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:9},color:'#6b7280',padding:6,boxWidth:8}}},
+    scales:{x:{ticks:{font:{size:9},color:'#6b7280'},grid:{display:false}},y:{ticks:{font:{size:9},color:'#6b7280',callback:function(v){return v+'M';}},grid:{color:'rgba(255,255,255,.04)'}}}}});
+  var ttps=rows.filter(function(r){return r.ok===1&&r.tpay&&r.tin;}).map(function(r){return(r.tpay-r.tin)/6e4;}).filter(function(x){return x>0&&x<10080;}).sort(function(a,b){return a-b;});
+  if(ttps.length>0){
+    var med=ttps[Math.floor(ttps.length/2)],avg=ttps.reduce(function(a,b){return a+b;},0)/ttps.length;
+    var w5=ttps.filter(function(x){return x<=5;}).length,w30=ttps.filter(function(x){return x<=30;}).length;
+    setHtml('time-st','<div class="sg"><div class="sb"><div class="sv">'+med.toFixed(1)+' ph</div><div class="sl">Trung vi</div></div><div class="sb"><div class="sv">'+avg.toFixed(1)+' ph</div><div class="sl">Trung binh</div></div><div class="sb"><div class="sv">'+(w5/ttps.length*100).toFixed(0)+'%</div><div class="sl">Trong 5 phut</div></div><div class="sb"><div class="sv">'+(w30/ttps.length*100).toFixed(0)+'%</div><div class="sl">Trong 30 phut</div></div></div>');
+  } else setHtml('time-st','<span style="font-size:11px;color:var(--mu)">Khong du timein_success.</span>');
+}
+
+/* ────────── USER SEGMENT ────────── */
+function segOf(u){var f=u.events;return f>=10?'Power (10+)':f>=4?'Thuong xuyen (4-10)':f>=2?'Thinh thoang (2-3)':'Moi (1 lan)';}
+function bUser(rows){
+  var segs=['Moi (1 lan)','Thinh thoang (2-3)','Thuong xuyen (4-10)','Power (10+)'];
+  var sd={};segs.forEach(function(s){sd[s]={p:0,t:0,users:0};});
+  Object.keys(UMAP).forEach(function(uid){var u=UMAP[uid];var s=segOf(u);sd[s].users++;sd[s].t+=u.events;sd[s].p+=u.paid;});
+  var crs=segs.map(function(s){return sd[s].t?+(sd[s].p/sd[s].t*100).toFixed(1):0;});
+  var abs=segs.map(function(s){return sd[s].t-sd[s].p;});
+  var sc=['#22c97a','#f5a623','#f04f4f','#4f8ef7'];
+  mkC('c-scr',{type:'bar',data:{labels:segs.map(function(s){return s.split(' ')[0];}),datasets:[{label:'CR%',data:crs,backgroundColor:sc,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.parsed.y+'%';}}}},
+      scales:{x:{ticks:{font:{size:9},color:'#6b7280'},grid:{display:false}},y:{min:0,max:100,ticks:{font:{size:9},color:'#6b7280',callback:function(v){return v+'%';}},grid:{color:'rgba(255,255,255,.04)'}}}}});
+  mkC('c-sab',{type:'doughnut',data:{labels:segs,datasets:[{data:abs,backgroundColor:sc,borderWidth:1,borderColor:'#13161d'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:9},color:'#6b7280',padding:5,boxWidth:8}}},cutout:'54%'}});
+  renderUserRevTable();
+}
+function renderUserRevTable(){
+  var minrev=parseFloat(document.getElementById('minrev').value)||0;
+  var segfil=(document.getElementById('segfil').value||'').toLowerCase();
+  var users=Object.keys(UMAP).map(function(uid){
+    var u=UMAP[uid];var s=segOf(u);var cr=u.events?+(u.paid/u.events*100).toFixed(1):0;
+    return{uid:uid,events:u.events,paid:u.paid,rl:u.rl,cr:cr,seg:s,nprods:Object.keys(u.prods).length,email:u.email,phone:u.phone};
+  }).filter(function(x){return x.rl>=minrev&&(segfil===''||x.seg.toLowerCase().indexOf(segfil)>=0);}).sort(function(a,b){return b.rl-a.rl;}).slice(0,1000);
+  var tbl='<div class="tbl-wrap tbl-scroll"><table class="tbl"><thead><tr><th>#</th><th>Login</th><th>Phan khuc</th><th>So gio</th><th>Da TT</th><th>CR</th><th>Revenue bo lo</th><th>Email</th><th>SDT</th></tr></thead><tbody>';
+  users.forEach(function(x,i){
+    var cc=x.cr>=65?'var(--gr)':x.cr>=45?'var(--am)':'var(--rd)';
+    tbl+='<tr><td style="color:var(--mu2)">'+(i+1)+'</td><td>'+x.uid+'</td><td><span style="font-size:9px;padding:2px 5px;border-radius:8px;background:var(--sur2);color:var(--mu)">'+x.seg+'</span></td><td>'+x.events+'</td><td>'+x.paid+'</td><td style="color:'+cc+'">'+x.cr+'%</td><td style="color:var(--rd)">'+fNd(x.rl)+'</td><td style="font-size:9px;color:var(--bl)">'+x.email+'</td><td style="font-size:9px;color:var(--am)">'+x.phone+'</td></tr>';
+  });
+  tbl+='</tbody></table></div>';
+  setHtml('urv-wrap',tbl);
+}
+
+/* ────────── CART ────────── */
+function bCart(rows){
+  var cmap={};
+  rows.forEach(function(r){if(!cmap[r.cart])cmap[r.cart]={prods:[],ok:0};cmap[r.cart].prods.push(r.prod);if(r.ok===1)cmap[r.cart].ok=1;});
+  var carts=Object.values(cmap);
+  var szD={};
+  carts.forEach(function(c){var sz=new Set(c.prods).size;if(!szD[sz])szD[sz]={p:0,t:0};szD[sz].t++;if(c.ok===1)szD[sz].p++;});
+  var szK=Object.keys(szD).map(Number).filter(function(k){return k<=10;}).sort(function(a,b){return a-b;});
+  var szCR=szK.map(function(k){return szD[k].t?+(szD[k].p/szD[k].t*100).toFixed(1):0;});
+  mkC('c-cart-cr',{type:'bar',data:{labels:szK.map(function(k){return k+' SP';}),datasets:[{label:'CR%',data:szCR,backgroundColor:szCR.map(crC),borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.parsed.y+'%';}}}},
+      scales:{x:{ticks:{font:{size:9},color:'#6b7280'},grid:{display:false}},y:{min:0,max:100,ticks:{font:{size:9},color:'#6b7280',callback:function(v){return v+'%';}},grid:{color:'rgba(255,255,255,.04)'}}}}});
+  mkC('c-cart-vol',{type:'bar',data:{labels:szK.map(function(k){return k+' SP';}),datasets:[{label:'Vol',data:szK.map(function(k){return szD[k].t;}),backgroundColor:'#4f8ef7',borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9},color:'#6b7280'},grid:{display:false}},y:{ticks:{font:{size:9},color:'#6b7280'},grid:{color:'rgba(255,255,255,.04)'}}}}});
+  var pd={};
+  carts.forEach(function(c){var u=Array.from(new Set(c.prods)).sort();for(var i=0;i<u.length;i++)for(var j=i+1;j<u.length;j++){var k=u[i]+' + '+u[j];if(!pd[k])pd[k]={n:0,ok:0};pd[k].n++;if(c.ok===1)pd[k].ok++;}});
+  var pairs=Object.keys(pd).filter(function(k){return pd[k].n>=3;}).map(function(k){var v=pd[k];return{pair:k,n:v.n,cr:v.n?+(v.ok/v.n*100).toFixed(0):0};}).sort(function(a,b){return b.n-a.n;}).slice(0,15);
+  var mxN=pairs.length?pairs[0].n:1;
+  setHtml('combo-det',mkBars(pairs,function(x){return x.pair.slice(0,28);},function(x){return x.n/mxN*100;},100,function(x){return x.n+' (CR:'+x.cr+'%)';},function(x){return crC(x.cr);}));
+}
+
+/* ────────── TELESALES ────────── */
+function bTelesales(){
+  TS_DATA=Object.keys(UMAP).map(function(uid){
+    var u=UMAP[uid];var cr=u.events?+(u.paid/u.events*100).toFixed(1):0;var seg=segOf(u);
+    var topP='';var mx=0;Object.keys(u.prods).forEach(function(p){if(u.prods[p]>mx){mx=u.prods[p];topP=p;}});
+    return{uid:uid,events:u.events,paid:u.paid,rl:u.rl,cr:cr,seg:seg,topProd:topP,nprods:Object.keys(u.prods).length,email:u.email,phone:u.phone,firstDate:u.firstDate};
+  }).filter(function(x){return x.rl>0;}).sort(function(a,b){return b.rl-a.rl;});
+  var totRL=TS_DATA.reduce(function(s,x){return s+x.rl;},0);
+  var top10RL=TS_DATA.slice(0,10).reduce(function(s,x){return s+x.rl;},0);
+  var zeroCR=TS_DATA.filter(function(x){return x.cr===0;}).length;
+  var hiVal=TS_DATA.filter(function(x){return x.rl>=1e6;}).length;
+  var hasContact=TS_DATA.filter(function(x){return x.phone||x.email;}).length;
+  setHtml('ts-kpi',
+    '<div class="kc"><div class="kl">Tong user bo lo</div><div class="kv" style="color:var(--rd)">'+TS_DATA.length.toLocaleString()+'</div><div class="ks">Co revenue bi bo</div></div>'+
+    '<div class="kc"><div class="kl">Top 10 user</div><div class="kv" style="color:var(--am)">'+fN(top10RL)+'</div><div class="ks">'+(totRL?Math.round(top10RL/totRL*100):0)+'% tong bo lo</div></div>'+
+    '<div class="kc"><div class="kl">Don tren 1M</div><div class="kv" style="color:var(--pu)">'+hiVal.toLocaleString()+'</div><div class="ks">Uu tien telesales</div></div>'+
+    '<div class="kc"><div class="kl">Co contact</div><div class="kv" style="color:var(--gr)">'+hasContact.toLocaleString()+'</div><div class="ks">Lay tu XLSX</div></div>');
+  renderTSTable();
+}
+function renderTSTable(){
+  var search=(document.getElementById('ts-search').value||'').toLowerCase();
+  var minrev=parseFloat(document.getElementById('ts-minrev').value)||0;
+  var lim=parseInt(document.getElementById('ts-limit').value)||1000;
+  var data=TS_DATA.filter(function(x){return x.rl>=minrev&&(search===''||x.uid.toLowerCase().includes(search));}).slice(0,lim);
+  setEl('ts-count','Hien '+data.length+' / '+TS_DATA.filter(function(x){return x.rl>=minrev;}).length+' user');
+  var tbl='<table class="tbl"><thead><tr><th>#</th><th>Login</th><th>Phan khuc</th><th>Revenue bo lo</th><th>CR</th><th>So gio</th><th>SP chinh</th><th>Email</th><th>SDT</th><th>Lan dau</th></tr></thead><tbody>';
+  data.forEach(function(x,i){
+    var cc=x.cr===0?'var(--rd)':x.cr<50?'var(--am)':'var(--gr)';
+    var pri=x.rl>=5e6?'var(--rd)':x.rl>=1e6?'var(--am)':'var(--mu)';
+    tbl+='<tr><td style="color:var(--mu2)">'+(i+1)+'</td><td style="color:var(--bl)">'+x.uid+'</td><td><span style="font-size:9px;padding:2px 5px;border-radius:8px;background:var(--sur2);color:var(--mu)">'+x.seg+'</span></td><td style="color:'+pri+';font-weight:600">'+fNd(x.rl)+'</td><td style="color:'+cc+'">'+x.cr+'%</td><td>'+x.events+'</td><td style="font-size:9px;color:var(--mu)">'+x.topProd.slice(0,16)+'</td><td style="font-size:9px;color:var(--bl)">'+x.email+'</td><td style="font-size:9px;color:var(--am)">'+x.phone+'</td><td style="font-size:9px">'+x.firstDate+'</td></tr>';
+  });
+  tbl+='</tbody></table>';
+  setHtml('ts-wrap',tbl);
+}
+
+/* ────────── CONTACT RECOVERY (XLSX) ────────── */
+var CT_DATA=[];
+function bContact(){
+  document.getElementById('contact-empty').style.display='none';
+  document.getElementById('contact-content').style.display='block';
+  var all=window.XLSX_ALL||[];
+  CT_DATA=all.filter(function(r){return (r.email&&r.email!=='')||(r.phone&&r.phone!=='')||(r.gmail&&r.gmail!=='');});
+  var hasPhone=CT_DATA.filter(function(r){return r.phone&&r.phone!=='';}).length;
+  var hasEmail=CT_DATA.filter(function(r){return r.email&&r.email!=='';}).length;
+  var hasGmail=CT_DATA.filter(function(r){return r.gmail&&(!r.email);}).length;
+  var pending=CT_DATA.filter(function(r){var s=r.status||'';return s.includes('Chưa')||s.includes('Chua');}).length;
+  setHtml('ct-kpi',
+    '<div class="kc"><div class="kl">Co contact (email/SDT)</div><div class="kv" style="color:var(--gr)">'+CT_DATA.length.toLocaleString()+'</div><div class="ks">Trong '+(window.XLSX_ALL||[]).length.toLocaleString()+' rows XLSX</div></div>'+
+    '<div class="kc"><div class="kl">Khong co contact (null)</div><div class="kv" style="color:var(--mu2)">'+(((window.XLSX_ALL||[]).length)-CT_DATA.length).toLocaleString()+'</div><div class="ks">Khach an danh</div></div>'+
+    '<div class="kc"><div class="kl">Co SDT</div><div class="kv" style="color:var(--am)">'+hasPhone.toLocaleString()+'</div><div class="ks">Goi dien truc tiep</div></div>'+
+    '<div class="kc"><div class="kl">Co Email</div><div class="kv" style="color:var(--bl)">'+hasEmail.toLocaleString()+'</div><div class="ks">Automation email</div></div>'+
+    '<div class="kc"><div class="kl">Chua TT co contact</div><div class="kv" style="color:var(--rd)">'+pending.toLocaleString()+'</div><div class="ks">Follow-up ngay</div></div>');
+  renderContactTable();
+}
+function renderContactTable(){
+  var statusF=document.getElementById('ct-status').value;
+  var phoneF=document.getElementById('ct-phone').value;
+  var search=(document.getElementById('ct-search').value||'').toLowerCase();
+  var data=(CT_DATA||[]).filter(function(r){
+    var st=r.status||'';
+    if(statusF==='bo'&&st!=='')return false;
+    if(statusF==='chua'&&!(st.includes('Chưa')||st.includes('Chua')))return false;
+    if(statusF==='da'&&!(st.includes('Đã')||st.toLowerCase().includes('thanh to')))return false;
+    if(phoneF==='yes'&&(!r.phone||r.phone===''))return false;
+    if(phoneF==='no'&&(r.phone&&r.phone!==''))return false;
+    if(search&&!(r.email+r.phone+r.login+r.gmail).toLowerCase().includes(search))return false;
+    return true;
+  }).slice(0,1000);
+  setEl('ct-count','Hien '+data.length+' / '+CT_DATA.length.toLocaleString()+' co contact');
+  var tbl='<table class="tbl"><thead><tr><th>#</th><th>Login</th><th>Email</th><th>SDT</th><th>Trang thai</th><th>Revenue gio</th><th>Dich vu</th><th>Thoi gian vao</th></tr></thead><tbody>';
+  data.forEach(function(r,i){
+    var stCol=(r.status&&(r.status.includes('Đã')||r.status.toLowerCase().includes('thanh to')))?'var(--gr)':(r.status&&(r.status.includes('Chưa')||r.status.includes('Chua')))?'var(--am)':'var(--mu)';
+    tbl+='<tr><td style="color:var(--mu2)">'+(i+1)+'</td><td style="color:var(--bl)">'+r.login+'</td><td style="font-size:9px;color:var(--bl)">'+r.email+'</td><td style="font-size:9px;color:var(--am)">'+r.phone+'</td><td style="font-size:9px;color:'+stCol+'">'+r.status+'</td><td style="font-size:9px;color:var(--rd)">'+r.totalCart.toLocaleString()+'</td><td style="font-size:9px;color:var(--mu);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+r.svc+'">'+r.svc.slice(0,30)+'</td><td style="font-size:9px">'+r.tinStr.slice(0,16)+'</td></tr>';
+  });
+  tbl+='</tbody></table>';
+  setHtml('ct-wrap',tbl);
+}
+function copyContactCSV(){
+  var data=(CT_DATA||[]);
+  var lines=['Login,Email,SDT,Gmail,TrangThai,RevenueGio,DichVu,ThoiGian'];
+  data.forEach(function(r){lines.push([r.login,r.email,r.phone,r.gmail,r.status,r.totalCart,'"'+r.svc.replace(/"/g,'""')+'"',r.tinStr].join(','));});
+  var blob=new Blob([lines.join('\n')],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='contact_recovery_'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a);a.click();setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(a.href);},500);
+}
+
+/* ────────── DOMAIN (XLSX) ────────── */
+function bDomain(){
+  document.getElementById('domain-empty').style.display='none';
+  document.getElementById('domain-content').style.display='block';
+  var all=window.XLSX_ALL||[];
+  var domD={};
+  all.forEach(function(r){
+    if(!r.svc)return;
+    r.svc.split(';').forEach(function(part){
+      var segs=part.trim().split('|');
+      if(segs.length>=1){
+        var svc=segs[0].trim();
+        if(!svc)return;
+        var rev=segs.length>=3?parseFloat(String(segs[2]||'').replace(/\./g,'').replace(',','.'))||0:0;
+        if(!domD[svc])domD[svc]={n:0,ok:0,rl:0};
+        domD[svc].n++;
+        var isPaid=r.status&&(r.status.includes('Đã')||r.status.toLowerCase().includes('thanh to'));
+        if(isPaid)domD[svc].ok++;else domD[svc].rl+=rev;
+      }
+    });
+  });
+  var items=Object.keys(domD).filter(function(k){return domD[k].n>=10;}).map(function(k){var v=domD[k];return{name:k,cr:v.n?+(v.ok/v.n*100).toFixed(1):0,n:v.n,rl:v.rl};});
+  var byCR=items.slice().sort(function(a,b){return b.cr-a.cr;}).slice(0,20);
+  var byRev=items.slice().sort(function(a,b){return b.rl-a.rl;}).slice(0,15);
+  var mxRL=Math.max.apply(null,byRev.map(function(x){return x.rl;}))||1;
+  setHtml('domain-cr',mkBars(byCR,function(x){return x.name.slice(0,14);},function(x){return x.cr;},100,function(x){return x.cr.toFixed(0)+'% ('+x.n+')';},function(x){return crC(x.cr);}));
+  setHtml('domain-rev',mkBars(byRev,function(x){return x.name.slice(0,14);},function(x){return x.rl/mxRL*100;},100,function(x){return fN(x.rl);},null,'#f04f4f'));
+  /* combo by domain */
+  var comboD={};
+  all.forEach(function(r){if(!r.svc)return;var svcs=r.svc.split(';').map(function(p){return p.split('|')[0].trim();}).filter(Boolean);var u=Array.from(new Set(svcs)).sort();for(var i=0;i<u.length;i++)for(var j=i+1;j<u.length;j++){var k=u[i]+' + '+u[j];if(!comboD[k])comboD[k]=0;comboD[k]++;}});
+  var combos=Object.keys(comboD).filter(function(k){return comboD[k]>=5;}).map(function(k){return{pair:k,n:comboD[k]};}).sort(function(a,b){return b.n-a.n;}).slice(0,15);
+  var mxC=combos.length?combos[0].n:1;
+  setHtml('domain-combo',mkBars(combos,function(x){return x.pair.slice(0,28);},function(x){return x.n/mxC*100;},100,function(x){return x.n+' lan';},null,'#7c5cbf'));
+}
+
+/* ────────── ANON (XLSX) ────────── */
+function bAnon(){
+  document.getElementById('anon-empty').style.display='none';
+  document.getElementById('anon-content').style.display='block';
+  var all=window.XLSX_ALL||[];
+  var anon=all.filter(function(r){return!r.login||r.login==='';});
+  var anonAb=anon.filter(function(r){return!r.status||r.status==='';});
+  var hasGmail=anon.filter(function(r){return r.gmail&&r.gmail!=='';});
+  var totRev=anon.reduce(function(s,r){return s+r.totalCart;},0);
+
+  setHtml('anon-kpi',
+    '<div class="kc"><div class="kl">Tong vang lai</div><div class="kv" style="color:var(--pu)">'+anon.length.toLocaleString()+'</div><div class="ks">Null login trong XLSX</div></div>'+
+    '<div class="kc"><div class="kl">Bo gio (empty status)</div><div class="kv" style="color:var(--rd)">'+anonAb.length.toLocaleString()+'</div><div class="ks">Hoan toan vo hinh voi CSV</div></div>'+
+    '<div class="kc"><div class="kl">Co Gmail</div><div class="kv" style="color:var(--gr)">'+hasGmail.length.toLocaleString()+'</div><div class="ks">Co the remarketing</div></div>'+
+    '<div class="kc"><div class="kl">Revenue bo lo uoc tinh</div><div class="kv" style="color:var(--am)">'+fN(totRev)+'</div><div class="ks">Chua VAT</div></div>');
+
+  /* Products anon bo gio */
+  var pd={};
+  anonAb.forEach(function(r){if(!r.svc)return;r.svc.split(';').forEach(function(p){var s=p.split('|')[0].trim();if(s){pd[s]=(pd[s]||0)+1;}});});
+  var pitems=Object.keys(pd).map(function(k){return{name:k,n:pd[k]};}).sort(function(a,b){return b.n-a.n;}).slice(0,15);
+  var mxP=pitems.length?pitems[0].n:1;
+  setHtml('anon-prod',mkBars(pitems,function(x){return x.name.slice(0,14);},function(x){return x.n/mxP*100;},100,function(x){return x.n+' lan';},null,'#7c5cbf'));
+
+  /* Hour distribution */
+  var hd=Array.from({length:24},function(){return 0;});
+  anon.forEach(function(r){if(r.tinStr){var h=parseInt((r.tinStr.split(' ')[1]||'0').split(':')[0]);if(h>=0&&h<24)hd[h]++;}});
+  mkC('c-anon-h',{type:'bar',data:{labels:Array.from({length:24},function(_,i){return i+'h';}),datasets:[{label:'Luot vao gio',data:hd,backgroundColor:'#7c5cbf',borderRadius:2}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:8},color:'#6b7280',autoSkip:false},grid:{display:false}},y:{ticks:{font:{size:9},color:'#6b7280'},grid:{color:'rgba(255,255,255,.04)'}}}}});
+
+  /* Gmail list */
+  var gmailList=hasGmail.slice(0,1000);
+  var tbl='<table class="tbl"><thead><tr><th>#</th><th>Gmail</th><th>Dich vu bo gio</th><th>Revenue</th><th>Thoi gian</th></tr></thead><tbody>';
+  gmailList.forEach(function(r,i){tbl+='<tr><td style="color:var(--mu2)">'+(i+1)+'</td><td style="color:var(--bl);font-size:10px">'+r.gmail+'</td><td style="font-size:9px;color:var(--mu)">'+r.svc.slice(0,40)+'</td><td style="font-size:10px;color:var(--am)">'+r.totalCart.toLocaleString()+'</td><td style="font-size:9px">'+r.tinStr.slice(0,16)+'</td></tr>';});
+  tbl+='</tbody></table>';
+  setHtml('anon-gmail',tbl);
+}
+
+/* ────────── PENDING (XLSX) ────────── */
+function bPending(){
+  document.getElementById('pending-empty').style.display='none';
+  document.getElementById('pending-content').style.display='block';
+  var all=window.XLSX_ALL||[];
+  var pend=all.filter(function(r){var s=r.status||'';return s.includes('Chưa')||s.includes('Chua');});
+  var totRev=pend.reduce(function(s,r){return s+r.totalCart;},0);
+  var hasContact=pend.filter(function(r){return (r.phone&&r.phone!=='')||(r.email&&r.email!=='');}).length;
+  var hasOrder=pend.filter(function(r){return r.orderId&&r.orderId!=='';}).length;
+
+  setHtml('pend-kpi',
+    '<div class="kc"><div class="kl">Tong don chua TT</div><div class="kv" style="color:var(--am)">'+pend.length.toLocaleString()+'</div><div class="ks">Da tao don, chua tra tien</div></div>'+
+    '<div class="kc"><div class="kl">Tong revenue</div><div class="kv" style="color:var(--rd)">'+fN(totRev)+'</div><div class="ks">Can thu ve ngay</div></div>'+
+    '<div class="kc"><div class="kl">Co contact</div><div class="kv" style="color:var(--gr)">'+hasContact.toLocaleString()+'</div><div class="ks">Goi dien / email ngay</div></div>'+
+    '<div class="kc"><div class="kl">Co ma don hang</div><div class="kv" style="color:var(--bl)">'+hasOrder.toLocaleString()+'</div><div class="ks">Co the check thanh toan</div></div>');
+
+  pend.sort(function(a,b){return b.totalCart-a.totalCart;});
+  var tbl='<table class="tbl"><thead><tr><th>#</th><th>Login</th><th>Email</th><th>SDT</th><th>Ma don hang</th><th>Revenue</th><th>Dich vu</th><th>Thoi gian vao</th></tr></thead><tbody>';
+  pend.slice(0,1000).forEach(function(r,i){
+    tbl+='<tr><td style="color:var(--mu2)">'+(i+1)+'</td><td style="color:var(--bl)">'+r.login+'</td><td style="font-size:9px;color:var(--bl)">'+r.email+'</td><td style="font-size:9px;color:var(--am)">'+r.phone+'</td><td style="font-size:9px;color:var(--pu)">'+r.orderId+'</td><td style="color:var(--rd);font-weight:600">'+r.totalCart.toLocaleString()+'</td><td style="font-size:9px;color:var(--mu)">'+r.svc.slice(0,35)+'</td><td style="font-size:9px">'+r.tinStr.slice(0,16)+'</td></tr>';
+  });
+  tbl+='</tbody></table>';
+  setHtml('pend-tbl',tbl);
+}
+
+/* ────────── HOSTING ────────── */
+function bHosting(rows){
+  var HOSTING_RE=/host|hosting|wordpress|wp\s|cloudhost|seolov/i;
+  var hs=rows.filter(function(r){return HOSTING_RE.test(r.prod);});
+  if(hs.length===0){setHtml('hs-kpi','<div style="font-size:12px;color:var(--mu);padding:10px 0">Khong tim thay san pham Hosting trong file CSV.</div>');return;}
+
+  var hsPaid=hs.filter(function(r){return r.ok===1;});
+  var hsAb=hs.filter(function(r){return r.ok===0;});
+  var hsCR=hs.length?+(hsPaid.length/hs.length*100).toFixed(1):0;
+  var hsRL=hsAb.reduce(function(s,r){return s+r.rev;},0);
+  var allCR=rows.length?+(rows.filter(function(r){return r.ok===1;}).length/rows.length*100).toFixed(1):0;
+  var diff=(hsCR-allCR).toFixed(1);
+  var diffCol=hsCR>=allCR?'var(--gr)':'var(--rd)';
+
+  /* KPI */
+  setHtml('hs-kpi',
+    '<div class="kc"><div class="kl">Tong gio Hosting</div><div class="kv" style="color:var(--bl)">'+hs.length.toLocaleString()+'</div><div class="ks">'+(hs.length/rows.length*100).toFixed(1)+'% tong CSV</div></div>'+
+    '<div class="kc"><div class="kl">CR Hosting</div><div class="kv" style="color:'+diffCol+'">'+hsCR+'%</div><div class="ks">Toan san pham: '+allCR+'% ('+diff+'%)</div></div>'+
+    '<div class="kc"><div class="kl">Da thanh toan</div><div class="kv" style="color:var(--gr)">'+hsPaid.length.toLocaleString()+'</div><div class="ks">Revenue: '+fN(hsPaid.reduce(function(s,r){return s+r.rev;},0))+'</div></div>'+
+    '<div class="kc"><div class="kl">Doanh thu bo lo</div><div class="kv" style="color:var(--rd)">'+fN(hsRL)+'</div><div class="ks">Recover 10% = '+fN(hsRL*.1)+'</div></div>');
+
+  /* CR theo loai hosting */
+  var byPlan={};
+  hs.forEach(function(r){if(!byPlan[r.prod])byPlan[r.prod]={p:0,t:0,rl:0};byPlan[r.prod].t++;if(r.ok===1)byPlan[r.prod].p++;else byPlan[r.prod].rl+=r.rev;});
+  var plans=Object.keys(byPlan).map(function(k){var v=byPlan[k];return{name:k,cr:v.t?+(v.p/v.t*100).toFixed(1):0,tot:v.t,rl:v.rl};}).sort(function(a,b){return b.tot-a.tot;});
+  var mxRL=Math.max.apply(null,plans.map(function(p){return p.rl;}))||1;
+  setHtml('hs-plan-cr',mkBars(plans,function(x){return x.name.slice(0,18);},function(x){return x.cr;},100,function(x){return x.cr+'% ('+x.tot+')';},function(x){return crC(x.cr);}));
+  setHtml('hs-plan-rev',mkBars(plans.slice().sort(function(a,b){return b.rl-a.rl;}),function(x){return x.name.slice(0,18);},function(x){return x.rl/mxRL*100;},100,function(x){return fN(x.rl);},null,'#f04f4f'));
+
+  /* Trend theo ngay */
+  var bd={};
+  hs.forEach(function(r){if(!bd[r.date])bd[r.date]={p:0,a:0};r.ok===1?bd[r.date].p++:bd[r.date].a++;});
+  var dk=Object.keys(bd).sort();
+  var pa=dk.map(function(d){return bd[d].p;}),aa=dk.map(function(d){return bd[d].a;});
+  var ca=dk.map(function(d){var t=bd[d].p+bd[d].a;return t?+(bd[d].p/t*100).toFixed(1):0;});
+  mkC('c-hs-trend',{data:{labels:dk.map(function(d){return d.slice(5);}),datasets:[
+    {type:'bar',label:'Thanh toan',data:pa,backgroundColor:'#5dcaa5',stack:'s'},
+    {type:'bar',label:'Bo gio',data:aa,backgroundColor:'rgba(240,79,79,.3)',stack:'s'},
+    {type:'line',label:'CR%',data:ca,borderColor:'#f5a623',backgroundColor:'transparent',pointRadius:2,yAxisID:'y2',borderWidth:1.5,order:0}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index'}},
+    scales:{x:{stacked:true,ticks:{font:{size:9},color:'#6b7280',maxTicksLimit:18,maxRotation:45},grid:{color:'rgba(255,255,255,.04)'}},
+      y:{stacked:true,ticks:{font:{size:9},color:'#6b7280',callback:function(v){return v>=100?(v/1000).toFixed(0)+'k':v;}},grid:{color:'rgba(255,255,255,.04)'}},
+      y2:{position:'right',min:0,max:100,ticks:{font:{size:9},color:'#f5a623',callback:function(v){return v+'%';}},grid:{display:false}}}}});
+
+  /* CR theo gio */
+  var hd=Array.from({length:24},function(){return{p:0,t:0};});
+  hs.forEach(function(r){hd[r.h].t++;if(r.ok===1)hd[r.h].p++;});
+  var hcr=hd.map(function(d){return d.t?+(d.p/d.t*100).toFixed(1):0;});
+  var hvol=hd.map(function(d){return d.t;});
+  mkC('c-hs-hour',{data:{labels:Array.from({length:24},function(_,i){return i+'h';}),datasets:[
+    {type:'bar',label:'Volume',data:hvol,backgroundColor:'rgba(93,202,165,.25)',yAxisID:'y'},
+    {type:'line',label:'CR%',data:hcr,borderColor:'#f5a623',backgroundColor:'transparent',pointRadius:3,borderWidth:2,yAxisID:'y2'}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index'}},
+    scales:{x:{ticks:{font:{size:8},color:'#6b7280',autoSkip:false},grid:{display:false}},
+      y:{ticks:{font:{size:9},color:'#6b7280'},grid:{color:'rgba(255,255,255,.04)'}},
+      y2:{position:'right',min:0,max:100,ticks:{font:{size:9},color:'#f5a623',callback:function(v){return v+'%';}},grid:{display:false}}}}});
+
+  /* CR theo gia tri don */
+  var bkts=[{l:'<100k',mn:0,mx:1e5},{l:'100-300k',mn:1e5,mx:3e5},{l:'300-500k',mn:3e5,mx:5e5},{l:'500k-1M',mn:5e5,mx:1e6},{l:'>1M',mn:1e6,mx:Infinity}];
+  var bd2=bkts.map(function(b){var inn=hs.filter(function(r){return r.rev>=b.mn&&r.rev<b.mx;});var pp=inn.filter(function(r){return r.ok===1;});return{lbl:b.l,cr:inn.length?+(pp.length/inn.length*100).toFixed(1):0,n:inn.length};});
+  mkC('c-hs-rev',{type:'bar',data:{labels:bd2.map(function(b){return b.lbl;}),datasets:[{label:'CR%',data:bd2.map(function(b){return b.cr;}),backgroundColor:bd2.map(function(b){return crC(b.cr);}),borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.parsed.y+'%';}}}},
+      scales:{x:{ticks:{font:{size:9},color:'#6b7280'},grid:{display:false}},y:{min:0,max:100,ticks:{font:{size:9},color:'#6b7280',callback:function(v){return v+'%';}},grid:{color:'rgba(255,255,255,.04)'}}}}});
+
+  /* San pham hay mua kem */
+  var hsCarts=new Set(hs.map(function(r){return r.cart;}));
+  var combo={};
+  rows.forEach(function(r){if(hsCarts.has(r.cart)&&!HOSTING_RE.test(r.prod)){combo[r.prod]=(combo[r.prod]||0)+1;}});
+  var combos=Object.keys(combo).map(function(k){return{name:k,n:combo[k]};}).sort(function(a,b){return b.n-a.n;}).slice(0,12);
+  var mxC=combos.length?combos[0].n:1;
+  setHtml('hs-combo',mkBars(combos,function(x){return x.name.slice(0,18);},function(x){return x.n/mxC*100;},100,function(x){return x.n+' lan';},null,'#5dcaa5'));
+
+  /* CR theo kenh */
+  var chMap={};
+  hs.forEach(function(r){if(!chMap[r.chan])chMap[r.chan]={p:0,t:0};chMap[r.chan].t++;if(r.ok===1)chMap[r.chan].p++;});
+  var chs=Object.keys(chMap).map(function(k){return{name:k,cr:chMap[k].t?+(chMap[k].p/chMap[k].t*100).toFixed(1):0,tot:chMap[k].t};}).sort(function(a,b){return b.tot-a.tot;});
+  mkC('c-hs-ch',{type:'bar',data:{labels:chs.map(function(c){return c.name;}),datasets:[
+    {label:'CR%',data:chs.map(function(c){return c.cr;}),backgroundColor:chs.map(function(c,i){return PAL[i%PAL.length];}),borderRadius:4},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.parsed.y+'%';}}}},
+    scales:{x:{ticks:{font:{size:10},color:'#6b7280'},grid:{display:false}},y:{min:0,max:100,ticks:{font:{size:9},color:'#6b7280',callback:function(v){return v+'%';}},grid:{color:'rgba(255,255,255,.04)'}}}}});
+
+  /* XLSX plan detail */
+  var xlsxAll=window.XLSX_ALL||[];
+  if(xlsxAll.length>0){
+    var hsPlanD={};
+    xlsxAll.forEach(function(r){
+      if(!r.svc)return;
+      r.svc.split(';').forEach(function(part){
+        var segs=part.trim().split('|');
+        var name=segs[0].trim();
+        if(!name||!HOSTING_RE.test(name))return;
+        var rev=segs.length>=3?parseFloat(String(segs[2]||'').replace(/\./g,'').replace(',','.'))||0:0;
+        if(!hsPlanD[name])hsPlanD[name]={n:0,ok:0,rl:0};
+        hsPlanD[name].n++;
+        var isPaid=r.status&&(r.status.includes('\u0110\u00e3')||r.status.toLowerCase().includes('thanh to'));
+        if(isPaid)hsPlanD[name].ok++;else hsPlanD[name].rl+=rev;
+      });
+    });
+    var planItems=Object.keys(hsPlanD).filter(function(k){return hsPlanD[k].n>=5;}).map(function(k){
+      var v=hsPlanD[k];return{name:k,cr:v.n?+(v.ok/v.n*100).toFixed(1):0,n:v.n,rl:v.rl};
+    }).sort(function(a,b){return b.n-a.n;});
+    var mxPRL=Math.max.apply(null,planItems.map(function(x){return x.rl;}))||1;
+    var planHtml='<div class="g2">';
+    planHtml+='<div><div class="ct2" style="margin-bottom:8px">CR theo goi</div>'+mkBars(planItems.slice().sort(function(a,b){return b.cr-a.cr;}),function(x){return x.name.slice(0,22);},function(x){return x.cr;},100,function(x){return x.cr+'% ('+x.n+')';},function(x){return crC(x.cr);})+'</div>';
+    planHtml+='<div><div class="ct2" style="margin-bottom:8px">Revenue bo lo theo goi</div>'+mkBars(planItems.slice().sort(function(a,b){return b.rl-a.rl;}),function(x){return x.name.slice(0,22);},function(x){return x.rl/mxPRL*100;},100,function(x){return fN(x.rl);},null,'#f04f4f')+'</div>';
+    planHtml+='</div>';
+    setHtml('hs-plan-detail',planHtml);
+    document.getElementById('hs-xlsx-badge').textContent='Tu XLSX';
+    document.getElementById('hs-xlsx-badge').className='bdg bdg-te';
+  } else {
+    setHtml('hs-plan-detail','<span style="font-size:11px;color:var(--mu)">Upload XLSX de xem ten goi chi tiet (SSD Hosting v2 - Basic, Wordpress Hosting v2 - Personal...).</span>');
+  }
+
+  /* User analysis */
+  var hsUsers={};
+  hs.forEach(function(r){
+    if(!hsUsers[r.user])hsUsers[r.user]={events:0,paid:0,rl:0,email:r.email||'',phone:r.phone||''};
+    hsUsers[r.user].events++;
+    if(r.ok===1)hsUsers[r.user].paid++;else hsUsers[r.user].rl+=r.rev;
+  });
+  var hsUserArr=Object.keys(hsUsers).map(function(uid){
+    var u=hsUsers[uid];var cr=u.events?+(u.paid/u.events*100).toFixed(1):0;
+    return{uid:uid,events:u.events,paid:u.paid,rl:u.rl,cr:cr,email:u.email,phone:u.phone};
+  });
+  var multiUser=hsUserArr.filter(function(x){return x.events>1;}).length;
+  var hsUserRL=hsUserArr.reduce(function(s,x){return s+x.rl;},0);
+  var zeroUser=hsUserArr.filter(function(x){return x.cr===0&&x.events>=2;}).length;
+  setHtml('hs-user-kpi',
+    '<div class="kc"><div class="kl">Tong user Hosting</div><div class="kv" style="color:var(--bl)">'+hsUserArr.length.toLocaleString()+'</div><div class="ks">Login ID duy nhat</div></div>'+
+    '<div class="kc"><div class="kl">Vao gio nhieu lan</div><div class="kv" style="color:var(--am)">'+multiUser.toLocaleString()+'</div><div class="ks">Chua quyet dinh</div></div>'+
+    '<div class="kc"><div class="kl">CR = 0% (>=2 lan)</div><div class="kv" style="color:var(--rd)">'+zeroUser.toLocaleString()+'</div><div class="ks">Uu tien re-engage</div></div>'+
+    '<div class="kc"><div class="kl">Revenue bo lo</div><div class="kv" style="color:var(--rd)">'+fN(hsUserRL)+'</div><div class="ks">Tong tu user hosting</div></div>');
+
+  /* CR theo phan khuc */
+  var segD={'1x':{p:0,t:0},'2-3x':{p:0,t:0},'4x+':{p:0,t:0}};
+  hsUserArr.forEach(function(u){var s=u.events>=4?'4x+':u.events>=2?'2-3x':'1x';segD[s].t+=u.events;segD[s].p+=u.paid;});
+  var segK=['1x','2-3x','4x+'];
+  var segCR=segK.map(function(s){return segD[s].t?+(segD[s].p/segD[s].t*100).toFixed(1):0;});
+  mkC('c-hs-seg',{type:'bar',data:{labels:segK,datasets:[{label:'CR%',data:segCR,backgroundColor:segCR.map(crC),borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.parsed.y+'%';}}}},
+      scales:{x:{ticks:{font:{size:10},color:'#6b7280'},grid:{display:false}},y:{min:0,max:100,ticks:{font:{size:10},color:'#6b7280',callback:function(v){return v+'%';}},grid:{color:'rgba(255,255,255,.04)'}}}}});
+
+  /* Top users bo lo */
+  var topUsers=hsUserArr.filter(function(x){return x.rl>0;}).sort(function(a,b){return b.rl-a.rl;});
+  var tbl='<table class="tbl"><thead><tr><th>#</th><th>Login</th><th>So gio</th><th>Da TT</th><th>CR</th><th>Revenue bo lo</th><th>Email</th><th>SDT</th></tr></thead><tbody>';
+  topUsers.forEach(function(x,i){
+    var cc=x.cr===0?'var(--rd)':x.cr<40?'var(--am)':'var(--gr)';
+    tbl+='<tr><td style="color:var(--mu2)">'+(i+1)+'</td><td style="color:var(--bl)">'+x.uid+'</td><td>'+x.events+'</td><td>'+x.paid+'</td><td style="color:'+cc+'">'+x.cr+'%</td><td style="color:var(--rd)">'+fNd(x.rl)+'</td><td style="font-size:9px;color:var(--bl)">'+x.email+'</td><td style="font-size:9px;color:var(--am)">'+x.phone+'</td></tr>';
+  });
+  tbl+='</tbody></table>';
+  setHtml('hs-user-tbl',tbl);
+  /* Them dong tong so */
+  var countEl=document.createElement('div');
+  countEl.style.cssText='font-size:10px;color:var(--mu);margin-top:6px;font-family:var(--mo)';
+  countEl.textContent='Tong: '+topUsers.length.toLocaleString()+' user co revenue bo lo';
+  document.getElementById('hs-user-tbl').after(countEl);
+
+  /* Insights */
+  var worstPlan=plans.slice().sort(function(a,b){return a.cr-b.cr;})[0];
+  var bestPlan=plans.slice().sort(function(a,b){return b.cr-a.cr;})[0];
+  var topCombo=combos.length?combos[0].name:'Domain';
+  var peakHour=hcr.map(function(c,i){return{h:i,cr:c,vol:hvol[i]};}).filter(function(x){return x.vol>=10;}).sort(function(a,b){return b.cr-a.cr;})[0];
+  var lowHour=hcr.map(function(c,i){return{h:i,cr:c,vol:hvol[i]};}).filter(function(x){return x.vol>=10;}).sort(function(a,b){return a.cr-b.cr;})[0];
+  var insights=[
+    {col:'#f04f4f',txt:'<b>'+worstPlan.name+'</b> co CR thap nhat ('+worstPlan.cr+'%) — '+worstPlan.tot+' gio hang, bo lo '+fN(worstPlan.rl)+'. Can: cai thien trang san pham, them so sanh goi, hien gia /thang thay vi /nam.'},
+    {col:'#22c97a',txt:'<b>'+bestPlan.name+'</b> co CR cao nhat ('+bestPlan.cr+'%) — day la benchmark. Tim hieu tai sao: gia phu hop, UI ro rang, hay do target customer khac?'},
+    {col:'#5dcaa5',txt:'San pham hay mua kem nhat: <b>'+topCombo+'</b> ('+combos[0].n+' lan). Nen tu dong goi y tren trang checkout hosting.'},
+    {col:'#f5a623',txt:'Khach vao gio hosting nhieu lan ('+multiUser+' user) nhung CR thap dan. Can: email nurturesequence sau 24h, live chat proactive khi detect quay lai.'},
+    {col:'#4f8ef7',txt:(peakHour?'Gio CR cao nhat: '+peakHour.h+'h ('+peakHour.cr+'%). ':'')+(lowHour?'Gio CR thap nhat: '+lowHour.h+'h ('+lowHour.cr+'%) — nen bat live chat va hien urgency banner luc nay.':'')}
+  ];
+  setHtml('hs-insights','<div style="display:flex;flex-direction:column;gap:8px">'+insights.map(function(ins){
+    return '<div style="display:flex;gap:10px;align-items:flex-start"><div style="width:3px;min-height:36px;background:'+ins.col+';border-radius:2px;flex-shrink:0;margin-top:2px"></div><div style="font-size:11px;color:var(--mu);line-height:1.65">'+ins.txt+'</div></div>';
+  }).join('')+'</div>');
+}
+
+
+function bAction(rows,paid,ab,rl){
+  var mp={};
+  rows.forEach(function(r){if(!mp[r.prod])mp[r.prod]={p:0,t:0,rl:0};mp[r.prod].t++;if(r.ok===1)mp[r.prod].p++;else mp[r.prod].rl+=r.rev;});
+  var zeroCR=Object.keys(mp).filter(function(k){return mp[k].t>=5&&mp[k].p===0;});
+  var lowCR=Object.keys(mp).filter(function(k){return mp[k].t>=20&&mp[k].p/mp[k].t<0.3;}).sort(function(a,b){return mp[b].rl-mp[a].rl;}).slice(0,3).map(function(k){return k+' ('+(mp[k].p/mp[k].t*100).toFixed(0)+'%)';});
+  var regAb=Object.keys(UMAP).filter(function(uid){var u=UMAP[uid];return u.events>=4&&(u.events-u.paid)>0;}).length;
+  var hiVal=TS_DATA.filter(function(x){return x.rl>=1e6;}).length;
+  var pendCount=XLSX_LOADED&&window.XLSX_ALL?(window.XLSX_ALL.filter(function(r){return (function(){var s2=r.status||'';return s2.includes('Chưa')||s2.includes('Chua');})();}).length):0;
+  var anonGmail=XLSX_LOADED&&window.XLSX_ALL?(window.XLSX_ALL.filter(function(r){return(!r.login||r.login==='')&&r.gmail&&r.gmail!=='';}).length):0;
+
+  var acts=[];
+  if(zeroCR.length>0)acts.push({col:'#f04f4f',bg:'rgba(240,79,79,.12)',title:'Kiem tra ky thuat san pham CR=0%',
+    desc:'San pham: '+zeroCR.slice(0,3).join(', ')+'. Co nhieu luot vao gio nhung 0 thanh toan. Kiem tra ngay: available, gia, JS error, nut checkout.',
+    tags:[['Lam ngay','tr'],['0 chi phi','tg'],['Ky thuat','tb2']]});
+  if(pendCount>0)acts.push({col:'#f5a623',bg:'rgba(245,166,35,.12)',title:'Follow-up '+pendCount+' don Chua thanh toan — co ma don hang',
+    desc:'Day khong phai bo gio — la khach DA TAO DON nhung chua tra tien. Rat co the loi payment gateway hoac chuyen khoan chua ve. Goi dien / gui invoice ngay trong ngay.',
+    tags:[['Hom nay','tr'],['Sales','tb2'],['Revenue chac chan','tg']]});
+  acts.push({col:'#f04f4f',bg:'rgba(240,79,79,.12)',title:'Telesales: '+hiVal+' user revenue bo lo tren 1 trieu dong',
+    desc:'Xem tab Telesales de lay danh sach. Uu tien nguoi co SDT (lay tu XLSX). Goi trong 1-2h sau khi bo gio — ti le chuyen doi cao nhat.',
+    tags:[['Tuan nay','tr'],['Sales','tb2'],['ROI cao nhat','tg']]});
+  acts.push({col:'#7c5cbf',bg:'rgba(124,92,191,.12)',title:'Abandoned cart automation cho '+ab.length.toLocaleString()+' gio bi bo',
+    desc:'Email 1h (nhac nho), Email 24h (social proof), Email 72h (offer nho). Xem tab Contact Recovery de export danh sach email. Voi khach vang lai co Gmail ('+anonGmail+' nguoi): chay remarketing Google/Meta.',
+    tags:[['Tuan nay','tp2'],['Marketing','tb2'],['Revenue '+fN(rl*.1)+'(10%)','tg']]});
+  if(lowCR.length>0)acts.push({col:'#4f8ef7',bg:'rgba(79,142,247,.12)',title:'Toi uu san pham CR thap: '+lowCR.join(', '),
+    desc:'Landing page rieng, so sanh doi thu, trial/demo, bao gia B2B cho don lon.',
+    tags:[['2-4 tuan','tb2'],['Product','ta']]});
+  if(regAb>50)acts.push({col:'#5dcaa5',bg:'rgba(93,202,165,.12)',title:'Loyalty program cho '+regAb+' user thuong xuyen bo gio',
+    desc:'Nhom 4-10 lan mua ang cho deal. Diem tich luy, badge than thiet, email uu dai gia han som.',
+    tags:[['1 thang','tb2'],['CRM','ta'],['CR +10-15%','tg']]});
+  acts.push({col:'#22c97a',bg:'rgba(34,201,122,.12)',title:'Toi uu UX checkout — 50% bo gio trong 30 giay dau',
+    desc:'Friction ngay tu dau: badge bao mat, so nguoi dang mua, live chat, dam bao hoan tien, toi uu mobile. Uu tien san pham co time-in-cart ngan nhat.',
+    tags:[['2-3 tuan','tb2'],['UX','ta']]});
+  acts.push({col:'#6b7280',bg:'rgba(107,114,128,.12)',title:'Yeu cau export 1 file CSV tong hop tu he thong',
+    desc:'Hien tai phai join 2 file thu cong. Nho ky thuat them vao CSV cac cot: email, phone, domain_name, service_detail, order_id, is_logged_in. Lam 1 lan, dung mai mai.',
+    tags:[['Dai han','ta'],['Data engineering','tb2']]});
+
+  var html='';
+  acts.forEach(function(a,i){
+    html+='<div class="ai"><div class="an" style="background:'+a.bg+';color:'+a.col+'">'+(i+1)+'</div><div style="flex:1"><div class="at" style="color:'+a.col+'">'+a.title+'</div><div class="ad">'+a.desc+'</div><div class="ats">'+a.tags.map(function(t){return'<span class="tag '+t[1]+'">'+t[0]+'</span>';}).join('')+'</div></div></div>';
+  });
+  setHtml('act-list',html);
+}
+
+/* ────────── TABS ────────── */
+function goTab(t,btn){
+  document.querySelectorAll('.tbtn').forEach(function(b){b.classList.remove('on');});
+  document.querySelectorAll('.tp').forEach(function(p){p.classList.remove('on');});
+  if(btn)btn.classList.add('on');
+  var el=document.getElementById('tp-'+t);if(el)el.classList.add('on');
+  setTimeout(function(){Object.values(CH).forEach(function(c){try{c.resize();}catch(e){}});},60);
+}
+
+/* ────────── EXPORT HTML ────────── */
+function exportHTML(){
+  var btn=document.getElementById('btn-export');btn.textContent='Dang tao...';btn.style.opacity='.6';
+  var dbSnap=document.getElementById('db').innerHTML;
+  var headHTML=document.head.outerHTML;
+  var fname=document.getElementById('fp-csv').textContent;
+  var chartData={};
+  Object.keys(CH).forEach(function(id){try{var c=CH[id];chartData[id]={type:c.config.type,data:JSON.parse(JSON.stringify(c.data)),options:JSON.parse(JSON.stringify(c.config.options))};}catch(e){}} );
+  var out='<!DOCTYPE html>\n<html lang="vi">\n'+headHTML+'\n<body>\n';
+  out+='<header style="display:flex;align-items:center;justify-content:space-between;padding:12px 24px;border-bottom:.5px solid var(--bd);position:sticky;top:0;z-index:100;background:rgba(13,15,20,.97);backdrop-filter:blur(12px)">';
+  out+='<div class="logo">CART <b>CONVERSION</b> <b style="color:var(--pu)">v2</b></div>';
+  out+='<span style="font-size:11px;font-family:var(--mo);color:var(--mu)">'+fname+'</span></header>\n';
+  out+='<div id="db" style="display:block;padding:18px 24px 60px;max-width:1360px;margin:0 auto">\n'+dbSnap+'\n</div>\n';
+  out+='<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"><\/script>\n';
+  out+='<script>\nvar CDATA='+JSON.stringify(chartData)+';\nvar RCH={};\n';
+  out+='window.addEventListener("load",function(){\n';
+  out+='  Object.keys(CDATA).forEach(function(id){\n';
+  out+='    var el=document.getElementById(id);if(!el)return;\n';
+  out+='    try{var par=el.parentNode;var nc=document.createElement("canvas");nc.id=id;par.replaceChild(nc,el);RCH[id]=new Chart(nc,{type:CDATA[id].type,data:CDATA[id].data,options:CDATA[id].options});}catch(e){}\n';
+  out+='  });\n';
+  out+='  var tabs=["trend","product","channel","hour","revenue","user","cart","telesales","contact","domain","anon","pending","hosting","action"];\n';
+  out+='  document.querySelectorAll(".tbtn").forEach(function(b,i){\n';
+  out+='    b.addEventListener("click",function(){\n';
+  out+='      document.querySelectorAll(".tbtn").forEach(function(x){x.classList.remove("on");});\n';
+  out+='      document.querySelectorAll(".tp").forEach(function(p){p.classList.remove("on");});\n';
+  out+='      b.classList.add("on");\n';
+  out+='      var t=tabs[i];var el=document.getElementById("tp-"+t);if(el)el.classList.add("on");\n';
+  out+='      setTimeout(function(){Object.values(RCH).forEach(function(c){try{c.resize();}catch(e){}});},60);\n';
+  out+='    });\n';
+  out+='  });\n';
+  out+='});\n<\/script>\n</body>\n</html>';
+  var blob=new Blob([out],{type:'text/html;charset=utf-8'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='cart-dashboard-v2-'+new Date().toISOString().slice(0,10)+'.html';
+  document.body.appendChild(a);a.click();
+  setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(a.href);},1000);
+  btn.textContent='&#8595; Xuat HTML';btn.style.opacity='1';
+}
+</script>
+</body>
+</html>
