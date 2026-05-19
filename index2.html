@@ -37,7 +37,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:12p
 
 /* UPLOAD */
 #up{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - 57px);padding:32px;gap:16px}
-.up-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:760px;width:100%}
+.up-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;max-width:1100px;width:100%}
 .dz{border:1.5px dashed var(--bd2);border-radius:16px;padding:28px 24px;text-align:center;cursor:pointer;transition:all .2s;background:var(--sur);position:relative}
 .dz:hover,.dz.drag{border-color:var(--bl);background:rgba(79,142,247,.04)}
 .dz.done{border-color:rgba(34,201,122,.5);background:rgba(34,201,122,.04)}
@@ -177,9 +177,11 @@ select.fi option{background:var(--sur2)}
   <div id="file-status">
     <span class="fs-pill" id="fp-csv">CSV: chua co</span>
     <span class="fs-pill" id="fp-xlsx">XLSX: chua co (tuy chon)</span>
+    <span class="fs-pill warn" id="fp-url">URL: chua co (tuy chon)</span>
   </div>
   <div class="hbtns">
     <button class="rbtn export" id="btn-export" onclick="exportHTML()">&#8595; Xuat HTML</button>
+    <button class="rbtn export" id="btn-export-master" onclick="exportMasterExcel()" style="border-color:rgba(124,92,191,.4);color:var(--pu);display:none">&#8595; Xuat Master Excel</button>
     <button class="rbtn" onclick="resetDash()">&#8593; Reset</button>
   </div>
 </header>
@@ -211,13 +213,26 @@ select.fi option{background:var(--sur2)}
       <div class="dz-done-lbl" id="xlsx-lbl" style="display:none"></div>
       <div class="dz-opt">Co the bo qua neu chi dung CSV</div>
     </div>
+    <!-- URL XLSX -->
+    <div class="dz" id="dz-url"
+      ondragover="event.preventDefault();this.classList.add('drag')"
+      ondragleave="this.classList.remove('drag')"
+      ondrop="onDrop(event,'url')">
+      <div class="dz-icon" style="background:rgba(93,202,165,.12)">&#128279;</div>
+      <div class="dz-t">File URL Tracking</div>
+      <div class="dz-s">ds_kh_truy_cap_url.xlsx<br>Tuy chon — hanh trinh trang, funnel, affiliate</div>
+      <label class="ulbl" style="background:var(--te)" for="fi-url">Chon file URL</label>
+      <input type="file" id="fi-url" accept=".xlsx,.xls" style="display:none" onchange="loadURL(this.files[0])">
+      <div class="dz-done-lbl" id="url-lbl" style="display:none"></div>
+      <div class="dz-opt">Sheet "Vi du Mau" hoac sheet dau tien</div>
+    </div>
   </div>
   <div class="up-note">
     <div class="up-note-t">Cot bat buoc trong CSV</div>
     <span class="ct">flg_success</span><span class="ct">revenue</span><span class="ct">product_type_name</span>
     <span class="ct">timein_carlist</span><span class="ct">login_id</span><span class="ct">tracking_cart_id</span>
     <span class="ct o">channel</span><span class="ct o">timein_success</span>
-    <div style="margin-top:10px" class="up-note-t">Cot trong XLSX (tu dong nhan dien)</div>
+    <div style="margin-top:10px" class="up-note-t">Cot trong XLSX Checking_Cart_List (tu dong nhan dien)</div>
     <span class="ct p">Ma KH (Login ID)</span><span class="ct p">Email tai khoan</span><span class="ct p">SDT</span>
     <span class="ct p">Trang thai</span><span class="ct p">Dich vu + gia</span><span class="ct p">Tong tien cart list</span>
     <span class="ct p">Thoi gian vao cart list</span><span class="ct p">uuid</span>
@@ -241,6 +256,8 @@ select.fi option{background:var(--sur2)}
     <span class="jb-item">Khach vang lai (XLSX): <b id="jb-anon" style="color:var(--pu)">-</b></span>
     <span class="jb-sep">|</span>
     <span class="jb-item">Chua thanh toan: <b id="jb-pending" style="color:var(--am)">-</b></span>
+    <span class="jb-sep" id="url-sep">|</span>
+    <span class="jb-item" id="url-count-wrap">URL: <b id="jb-url" style="color:var(--te)">-</b> rows</span>
   </div>
 
   <!-- KPI ROW -->
@@ -267,6 +284,9 @@ select.fi option{background:var(--sur2)}
     <button class="tbtn" onclick="goTab('anon',this)">Khach vang lai<span class="new">XLSX</span></button>
     <button class="tbtn" onclick="goTab('pending',this)">Chua TT<span class="new">XLSX</span></button>
     <button class="tbtn" onclick="goTab('hosting',this)">&#127968; Hosting</button>
+    <button class="tbtn" onclick="goTab('journey',this)">&#128249; Hanh trinh KH<span class="new">URL</span></button>
+    <button class="tbtn" onclick="goTab('funnel',this)">&#127908; Funnel URL<span class="new">URL</span></button>
+    <button class="tbtn" onclick="goTab('affiliate',this)">&#128279; Affiliate<span class="new">URL</span></button>
     <button class="tbtn" onclick="goTab('action',this)">Action plan</button>
   </div>
 
@@ -316,8 +336,9 @@ select.fi option{background:var(--sur2)}
 
   <!-- TAB: USER SEGMENT -->
   <div id="tp-user" class="tp">
-    <div class="g2">
-      <div class="cc nm"><div class="ct2">CR theo tan suat mua</div><div class="cw" style="height:200px"><canvas id="c-scr" role="img" aria-label="CR theo tan suat mua"></canvas></div></div>
+    <div class="g3">
+      <div class="cc nm"><div class="ct2">CR theo tan suat vao gio</div><div class="cw" style="height:200px"><canvas id="c-scr" role="img" aria-label="CR theo tan suat mua"></canvas></div></div>
+      <div class="cc nm"><div class="ct2">CR theo lan vao gio</div><div class="cw" style="height:200px"><canvas id="c-svnum" role="img" aria-label="CR theo lan thu may"></canvas></div></div>
       <div class="cc nm"><div class="ct2">Gio bi bo theo phan khuc</div><div class="cw" style="height:200px"><canvas id="c-sab" role="img" aria-label="Gio bi bo theo phan khuc"></canvas></div></div>
     </div>
     <div class="cc" style="margin-top:11px">
@@ -352,8 +373,8 @@ select.fi option{background:var(--sur2)}
         <input class="fi" id="ts-search" placeholder="Tim login_id..." style="width:130px" oninput="renderTSTable()">
         <span class="flab">Min revenue:</span>
         <input class="fi" type="number" id="ts-minrev" value="1000000" style="width:100px" oninput="renderTSTable()">
-        <span class="flab">Hien:</span>
-        <input class="fi" type="number" id="ts-limit" value="1000" style="width:55px" oninput="renderTSTable()">
+        
+        <button class="rbtn" onclick="exportTSTableExcel()" style="border-color:rgba(34,201,122,.4);color:var(--gr);font-size:10px">Xuất Excel</button>
       </div>
       <div class="tbl-wrap tbl-scroll" id="ts-wrap"></div>
       <div style="margin-top:6px;font-size:10px;color:var(--mu)" id="ts-count"></div>
@@ -386,7 +407,7 @@ select.fi option{background:var(--sur2)}
           </select>
           <span class="flab">Tim:</span>
           <input class="fi" id="ct-search" placeholder="email / SDT / login..." style="width:130px" oninput="renderContactTable()">
-          <button class="rbtn" onclick="copyContactCSV()" style="border-color:rgba(34,201,122,.4);color:var(--gr);font-size:10px">Export CSV</button>
+          <button class="rbtn" onclick="exportContactTableExcel()" style="border-color:rgba(34,201,122,.4);color:var(--gr);font-size:10px">Xuất Excel</button>
         </div>
         <div class="tbl-wrap tbl-scroll" id="ct-wrap"></div>
         <div style="margin-top:6px;font-size:10px;color:var(--mu)" id="ct-count"></div>
@@ -516,6 +537,107 @@ select.fi option{background:var(--sur2)}
     </div>
   </div>
 
+
+  <!-- TAB: JOURNEY -->
+  <div id="tp-journey" class="tp">
+    <div class="cc">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:11px">
+        <div class="ct2" style="margin-bottom:0">Hanh trinh tung khach hang — URL tracking</div>
+        <span class="bdg bdg-te" id="jn-badge">URL required</span>
+      </div>
+      <div id="jn-empty" style="font-size:12px;color:var(--mu);padding:20px 0">Can upload file URL tracking de xem tab nay.</div>
+      <div id="jn-content" style="display:none">
+        <div class="g4" id="jn-kpi"></div>
+        <div class="cc" style="margin-top:11px">
+          <div class="ct2">Top URL — luot truy cap nhieu nhat</div>
+          <div id="jn-url-bars"></div>
+        </div>
+        <div class="cc" style="margin-top:11px">
+          <div class="ct2">Hanh trinh chi tiet tung user (join voi CSV)</div>
+          <div class="frow" style="margin-bottom:8px">
+            <span class="flab">Tim user:</span>
+            <input class="fi" id="jn-search" placeholder="login_id..." style="width:140px" oninput="renderJourney()">
+            
+            
+            
+          </div>
+          <div id="jn-table"></div>
+        </div>
+        <div class="cc" style="margin-top:11px">
+          <div class="ct2">Pattern pho bien — nhom user theo hanh trinh</div>
+          <div id="jn-patterns"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: FUNNEL URL -->
+  <div id="tp-funnel" class="tp">
+    <div class="cc">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:11px">
+        <div class="ct2" style="margin-bottom:0">Funnel tung buoc — diem roi chinh xac</div>
+        <span class="bdg bdg-te">URL required</span>
+      </div>
+      <div id="fn-empty" style="font-size:12px;color:var(--mu);padding:20px 0">Can upload file URL tracking de xem tab nay.</div>
+      <div id="fn-content" style="display:none">
+        <div class="g2">
+          <div class="cc nm">
+            <div class="ct2">Funnel checkout — so luot tung buoc</div>
+            <div class="cw" style="height:280px"><canvas id="c-fn-funnel" role="img" aria-label="Funnel checkout theo URL"></canvas></div>
+          </div>
+          <div class="cc nm">
+            <div class="ct2">Phan bo thoi gian tren trang (so giay)</div>
+            <div class="cw" style="height:280px"><canvas id="c-fn-time" role="img" aria-label="Thoi gian tren trang theo URL"></canvas></div>
+          </div>
+        </div>
+        <div class="cc" style="margin-top:11px">
+          <div class="ct2">Drop-off theo buoc — so user roi va ly do</div>
+          <div id="fn-dropoff"></div>
+        </div>
+        <div class="cc" style="margin-top:11px">
+          <div class="ct2">Payment/error — danh sach user gap loi thanh toan</div>
+          <div id="fn-errors"></div>
+        </div>
+        <div class="cc" style="margin-top:11px">
+          <div class="ct2">SearchGPT engagement — user o lau nhung chua mua</div>
+          <div id="fn-search"></div>
+        </div>
+        <div class="cc" style="margin-top:11px">
+          <div class="ct2">Alert — User quay lại 3+ lần chưa chuyển đổi (cần Sales gọi ngay)</div>
+          <div id="fn-alert-repeat"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: AFFILIATE -->
+  <div id="tp-affiliate" class="tp">
+    <div class="cc">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:11px">
+        <div class="ct2" style="margin-bottom:0">Phan tich affiliate — code nao mang traffic chat luong</div>
+        <span class="bdg bdg-te">URL required</span>
+      </div>
+      <div id="af-empty" style="font-size:12px;color:var(--mu);padding:20px 0">Can upload file URL tracking de xem tab nay.</div>
+      <div id="af-content" style="display:none">
+        <div class="g4" id="af-kpi"></div>
+        <div class="g2" style="margin-top:11px">
+          <div class="cc nm">
+            <div class="ct2">Luot truy cap theo affiliate code</div>
+            <div id="af-vol-bars"></div>
+          </div>
+          <div class="cc nm">
+            <div class="ct2">CR theo affiliate (join voi CSV)</div>
+            <div id="af-cr-bars"></div>
+          </div>
+        </div>
+        <div class="cc" style="margin-top:11px">
+          <div class="ct2">Chi tiet tung affiliate — luot, CR, revenue, avg time</div>
+          <div class="tbl-wrap tbl-scroll" id="af-tbl"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- TAB: ACTION -->
   <div id="tp-action" class="tp">
     <div class="al" id="act-list"></div>
@@ -524,11 +646,42 @@ select.fi option{background:var(--sur2)}
 
 <script>
 /* ────────── STATE ────────── */
-var CH={}, CSV_ROWS=[], XLSX_ROWS=[], JOINED=[], UMAP={}, TS_DATA=[], XLSX_LOADED=false;
+
+function exportExcel(data, cols, filename) {
+  if(!data || !data.length){ alert('Không có dữ liệu để xuất'); return; }
+  var exportData = data.map(function(item, idx) {
+    var row = {};
+    cols.forEach(function(c) {
+      row[c.header] = typeof c.value === 'function' ? c.value(item, idx) : item[c.key];
+    });
+    return row;
+  });
+  var ws = XLSX.utils.json_to_sheet(exportData);
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+  XLSX.writeFile(wb, filename + "_" + new Date().toISOString().slice(0,10) + ".xlsx");
+}
+function getPaginationHTML(totalItems, currentPage, funcName) {
+  var pageSize = 1000;
+  var totalPages = Math.ceil(totalItems / pageSize);
+  if (totalPages <= 1) return '';
+  var html = '<div style="display:flex;gap:5px;margin-top:10px;justify-content:center;flex-wrap:wrap">';
+  for(var i=1; i<=totalPages; i++){
+    var bg = i === currentPage ? 'var(--bl)' : 'transparent';
+    var tx = i === currentPage ? '#fff' : 'var(--mu)';
+    var bd = i === currentPage ? 'var(--bl)' : 'var(--bd2)';
+    html += '<button class="rbtn" onclick="'+funcName+'('+i+')" style="background:'+bg+';color:'+tx+';border-color:'+bd+';padding:3px 8px;font-size:10px;min-width:24px">'+i+'</button>';
+  }
+  html += '</div>';
+  return html;
+}
+
+var CH={}, CSV_ROWS=[], XLSX_ROWS=[], URL_ROWS=[], JOINED=[], UMAP={}, TS_DATA=[], XLSX_LOADED=false;
+window.URL_LOADED=false; window.URL_ALL=[];
 var PAL=['#4f8ef7','#22c97a','#f5a623','#7c5cbf','#f04f4f','#5dcaa5','#f093fb','#43e97b','#fa8231','#a29bfe'];
 
 /* ────────── FILE LOAD ────────── */
-function onDrop(e,t){e.preventDefault();document.getElementById('dz-'+t).classList.remove('drag');var f=e.dataTransfer.files[0];if(f){if(t==='csv')loadCSV(f);else loadXLSX(f);}}
+function onDrop(e,t){e.preventDefault();document.getElementById('dz-'+t).classList.remove('drag');var f=e.dataTransfer.files[0];if(f){if(t==='csv')loadCSV(f);else if(t==='url')loadURL(f);else loadXLSX(f);}}
 
 function loadCSV(file){
   setLd(true,'Doc file CSV...');
@@ -563,16 +716,67 @@ function loadXLSX(file){
   reader.readAsArrayBuffer(file);
 }
 
+
+function loadURL(file){
+  setLd(true,'Doc file URL...');
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var wb=XLSX.read(e.target.result,{type:'array'});
+      /* Chon sheet chua du lieu chinh:
+         - Uu tien sheet co tu "Mau" hoac "Vi du"
+         - Tiep theo sheet dau tien co nhieu rows nhat
+         - Fallback: sheet dau tien */
+      var sname=null;
+      wb.SheetNames.forEach(function(s){
+        var sl=s.toLowerCase();
+        if(!sname&&(sl.indexOf('vi')>=0||sl.indexOf('mau')>=0||sl.indexOf('example')>=0))sname=s;
+      });
+      if(!sname){
+        /* pick sheet with most rows */
+        var maxR=0;
+        wb.SheetNames.forEach(function(s){
+          var ref=wb.Sheets[s]['!ref'];
+          if(ref){var r=XLSX.utils.decode_range(ref).e.r||0;if(r>maxR){maxR=r;sname=s;}}
+        });
+      }
+      if(!sname)sname=wb.SheetNames[0];
+      var ws=wb.Sheets[sname];
+      var parsed=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      /* Filter out completely empty rows */
+      URL_ROWS=parsed.filter(function(r){return r.some(function(v){return v!==null&&v!==undefined&&String(v).trim()!=='';});});
+      window.URL_LOADED=true;
+      document.getElementById('url-lbl').textContent=file.name+' (sheet: '+sname+', '+(URL_ROWS.length-1).toLocaleString()+' rows)';
+      document.getElementById('url-lbl').style.display='block';
+      document.getElementById('dz-url').classList.add('done');
+      document.getElementById('fp-url').textContent='URL: '+file.name;
+      document.getElementById('fp-url').className='fs-pill ok';
+      checkReady();setLd(false);
+    }catch(err){setLd(false);alert('Loi doc URL file: '+err.message);console.error(err);}
+  };
+  reader.readAsArrayBuffer(file);
+}
+
 function checkReady(){
   var ready=CSV_ROWS.length>0;
   var btn=document.getElementById('go-btn');
   btn.classList.toggle('ready',ready);
-  btn.textContent=ready?(XLSX_LOADED?'Phan tich voi ca 2 file':'Phan tich chi voi CSV'):'Phan tich ngay';
+  var n=1+(XLSX_LOADED?1:0)+(window.URL_LOADED?1:0);btn.textContent=ready?('Phan tich voi '+n+' file'):'Phan tich ngay';
 }
 
 /* ────────── UTILS ────────── */
-function fN(n){if(n>=1e9)return(n/1e9).toFixed(1)+' ty';if(n>=1e6)return(n/1e6).toFixed(0)+' tr';if(n>=1e3)return(n/1e3).toFixed(0)+'k';return Math.round(n)+'';}
-function fNd(n){if(n>=1e9)return(n/1e9).toFixed(2)+' ty';if(n>=1e6)return(n/1e6).toFixed(1)+' tr';if(n>=1e3)return(n/1e3).toFixed(0)+'k';return Math.round(n)+'';}
+function fN(n){
+  n=Math.round(n);
+  if(n>=1e9)return(n/1e9).toFixed(2).replace('.',',')+' tỷ';
+  if(n>=1e6)return(n/1e6).toFixed(1).replace('.',',')+' tr';
+  return n.toLocaleString('vi-VN');
+}
+function fNd(n){
+  n=Math.round(n);
+  if(n>=1e9)return(n/1e9).toFixed(3).replace('.',',')+' tỷ';
+  if(n>=1e6)return(n/1e6).toFixed(2).replace('.',',')+' tr';
+  return n.toLocaleString('vi-VN');
+}
 function pdate(s){return(s&&String(s).trim())?new Date(s):null;}
 function crC(c){return c>=65?'#22c97a':c>=45?'#f5a623':'#f04f4f';}
 function setEl(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
@@ -580,15 +784,105 @@ function setHtml(id,v){var e=document.getElementById(id);if(e)e.innerHTML=v;}
 function killCh(){Object.keys(CH).forEach(function(k){try{CH[k].destroy();}catch(e){}});CH={};}
 function mkC(id,cfg){var el=document.getElementById(id);if(!el)return;if(CH[id]){try{CH[id].destroy();}catch(e){}}CH[id]=new Chart(el,cfg);}
 function setLd(on,t){document.getElementById('ld').style.display=on?'flex':'none';if(t)document.getElementById('ltx').textContent=t;}
-function resetDash(){killCh();CSV_ROWS=[];XLSX_ROWS=[];JOINED=[];UMAP={};TS_DATA=[];XLSX_LOADED=false;
+function resetDash(){killCh();CSV_ROWS=[];XLSX_ROWS=[];URL_ROWS=[];JOINED=[];UMAP={};TS_DATA=[];XLSX_LOADED=false;window.URL_LOADED=false;window.URL_ALL=[];
   document.getElementById('db').style.display='none';document.getElementById('up').style.display='flex';
   document.getElementById('fp-csv').textContent='CSV: chua co';document.getElementById('fp-csv').className='fs-pill';
   document.getElementById('fp-xlsx').textContent='XLSX: chua co (tuy chon)';document.getElementById('fp-xlsx').className='fs-pill warn';
-  document.getElementById('fi-csv').value='';document.getElementById('fi-xlsx').value='';
-  document.getElementById('csv-lbl').style.display='none';document.getElementById('xlsx-lbl').style.display='none';
-  document.getElementById('dz-csv').classList.remove('done');document.getElementById('dz-xlsx').classList.remove('done');
-  document.getElementById('btn-export').style.display='none';document.getElementById('err').style.display='none';
+  document.getElementById('fp-url').textContent='URL: chua co (tuy chon)';document.getElementById('fp-url').className='fs-pill warn';
+  document.getElementById('fi-csv').value='';document.getElementById('fi-xlsx').value='';document.getElementById('fi-url').value='';
+  document.getElementById('csv-lbl').style.display='none';document.getElementById('xlsx-lbl').style.display='none';document.getElementById('url-lbl').style.display='none';
+  document.getElementById('dz-csv').classList.remove('done');document.getElementById('dz-xlsx').classList.remove('done');document.getElementById('dz-url').classList.remove('done');
+  document.getElementById('btn-export').style.display='none';document.getElementById('btn-export-master').style.display='none';document.getElementById('err').style.display='none';
   checkReady();}
+
+function exportMasterExcel() {
+  if(typeof XLSX === 'undefined') { alert("Thu vien XLSX chua san sang."); return; }
+  var wb = XLSX.utils.book_new();
+
+  /* 1. Telesales */
+  var tsRows = TS_DATA.map(function(x){
+    return {
+      "Login ID": x.uid,
+      "Phan khuc": x.seg,
+      "Revenue bo lo": x.rl,
+      "CR (%)": x.cr,
+      "So gio": x.events,
+      "San pham chinh": x.topProd,
+      "Email": x.email,
+      "SDT": x.phone,
+      "Canh bao": x.events >= 3 ? "Quay lai 3+ lan" : ""
+    };
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(tsRows), "Telesales_Uu_Tien");
+
+  /* 2. Loi thanh toan */
+  var errRows = [];
+  if(window.UJ_MAP) {
+    Object.keys(window.UJ_MAP).forEach(function(uid){
+      var steps = window.UJ_MAP[uid].steps;
+      if(steps.some(function(s){return s.path.toLowerCase().includes('error');})) {
+        var hasSuccess = steps.some(function(s){return s.path.includes('success');});
+        errRows.push({
+          "Login ID": uid,
+          "Revenue bo lo": UMAP[uid] ? UMAP[uid].rl : 0,
+          "Da mua lai?": hasSuccess ? "Co" : "Khong",
+          "SDT": window.UJ_MAP[uid].phone || "",
+          "Email": window.UJ_MAP[uid].email || ""
+        });
+      }
+    });
+  }
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(errRows), "Loi_Thanh_Toan");
+
+  /* 3. Email Remarketing */
+  var emRows = (window.XLSX_ALL || []).filter(function(r){
+    var isPending = r.status && (r.status.includes('Chưa') || r.status.includes('Chua'));
+    var isAb = !r.status || r.status === '';
+    return (isPending || isAb) && (r.email || r.gmail);
+  }).map(function(r){
+    return {
+      "Login ID": r.login,
+      "Email": r.email || r.gmail,
+      "SDT": r.phone,
+      "Trang thai": r.status || "Bo gio (Empty)",
+      "Revenue gio": r.totalCart,
+      "Dich vu": r.svc,
+      "Thoi gian vao": r.tinStr
+    };
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(emRows), "Email_Remarketing");
+
+  /* 4. Combo Insights */
+  var comboRows = [];
+  var pairD = {};
+  var cmap = {};
+  JOINED.forEach(function(r){
+    if(!cmap[r.cart])cmap[r.cart]={prods:[],ok:0};
+    cmap[r.cart].prods.push(r.prod);
+    if(r.ok===1)cmap[r.cart].ok=1;
+  });
+  Object.values(cmap).forEach(function(c){
+    var uniq = Array.from(new Set(c.prods)).sort();
+    for(var i=0;i<uniq.length;i++){
+      for(var j=i+1;j<uniq.length;j++){
+        var key=uniq[i]+' + '+uniq[j];
+        if(!pairD[key])pairD[key]={n:0,ok:0};
+        pairD[key].n++;
+        if(c.ok===1)pairD[key].ok++;
+      }
+    }
+  });
+  Object.keys(pairD).filter(function(k){return pairD[k].n>=3;}).sort(function(a,b){return pairD[b].n-pairD[a].n;}).forEach(function(k){
+    comboRows.push({
+      "Combo san pham": k,
+      "So lan cung gio": pairD[k].n,
+      "Ti le mua (CR)": (pairD[k].ok/pairD[k].n*100).toFixed(1) + "%"
+    });
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(comboRows), "Combo_Insights");
+
+  XLSX.writeFile(wb, "Master_Report_" + new Date().toISOString().slice(0,10) + ".xlsx");
+}
 
 function mkBars(items,lblFn,valFn,maxV,dispFn,colFn,defC){
   var out='';
@@ -731,6 +1025,9 @@ function buildJoin(){
   document.getElementById('join-bar').style.display='flex';
   setEl('jb-csv',CSV_ROWS.length.toLocaleString());
   setEl('jb-xlsx',(XLSX_ROWS.length-1).toLocaleString());
+  var urlCountEl=document.getElementById('jb-url');
+  if(urlCountEl)urlCountEl.parentElement.style.display=window.URL_LOADED?'':'none';
+  if(urlCountEl)urlCountEl.textContent=(URL_ROWS.length-1).toLocaleString();
   setEl('jb-join',matched.toLocaleString());
   setEl('jb-anon',anon.toLocaleString());
   setEl('jb-pending',pending.toLocaleString());
@@ -750,6 +1047,7 @@ function startRender(){
       document.getElementById('up').style.display='none';
       document.getElementById('db').style.display='block';
       document.getElementById('btn-export').style.display='inline-block';
+      document.getElementById('btn-export-master').style.display='inline-block';
       setLd(false);
     }catch(e){setLd(false);var eb=document.getElementById('err');eb.textContent='Loi: '+e.message;eb.style.display='block';console.error(e);}
   },60);
@@ -791,6 +1089,15 @@ function render(){
       setHtml(t+'-empty','Can upload file XLSX de xem tab nay.');
       var ee=document.getElementById(t+'-empty');if(ee)ee.style.display='block';
       var ec=document.getElementById(t+'-content');if(ec)ec.style.display='none';
+    });
+  }
+
+  if(window.URL_LOADED&&URL_ROWS.length>1){
+    bURLTabs(rows);
+  } else {
+    ['jn','fn','af'].forEach(function(p){
+      var ee=document.getElementById(p+'-empty');if(ee){ee.textContent='Can upload file URL tracking de xem tab nay.';ee.style.display='block';}
+      var ec=document.getElementById(p+'-content');if(ec)ec.style.display='none';
     });
   }
 }
@@ -896,7 +1203,32 @@ function bRevenue(rows){
   if(ttps.length>0){
     var med=ttps[Math.floor(ttps.length/2)],avg=ttps.reduce(function(a,b){return a+b;},0)/ttps.length;
     var w5=ttps.filter(function(x){return x<=5;}).length,w30=ttps.filter(function(x){return x<=30;}).length;
-    setHtml('time-st','<div class="sg"><div class="sb"><div class="sv">'+med.toFixed(1)+' ph</div><div class="sl">Trung vi</div></div><div class="sb"><div class="sv">'+avg.toFixed(1)+' ph</div><div class="sl">Trung binh</div></div><div class="sb"><div class="sv">'+(w5/ttps.length*100).toFixed(0)+'%</div><div class="sl">Trong 5 phut</div></div><div class="sb"><div class="sv">'+(w30/ttps.length*100).toFixed(0)+'%</div><div class="sl">Trong 30 phut</div></div></div>');
+    var html='<div class="sg"><div class="sb"><div class="sv">'+med.toFixed(1)+' ph</div><div class="sl">Trung vi (1 session)</div></div><div class="sb"><div class="sv">'+avg.toFixed(1)+' ph</div><div class="sl">Trung binh (1 session)</div></div><div class="sb"><div class="sv">'+(w5/ttps.length*100).toFixed(0)+'%</div><div class="sl">Trong 5 phut</div></div><div class="sb"><div class="sv">'+(w30/ttps.length*100).toFixed(0)+'%</div><div class="sl">Trong 30 phut</div></div></div>';
+    
+    /* First touch to purchase */
+    var f2p = [];
+    Object.keys(UMAP).forEach(function(uid){
+      var u = UMAP[uid];
+      if(u.paid > 0) {
+        var uRows = rows.filter(function(r){return r.user===uid;}).sort(function(a,b){return a.tin-b.tin;});
+        var firstTin = uRows[0].tin;
+        var firstPay = uRows.find(function(r){return r.ok===1;});
+        if(firstTin && firstPay && firstPay.tpay) {
+          f2p.push((firstPay.tpay - firstTin) / (1000*60*60*24));
+        }
+      }
+    });
+    if(f2p.length>0) {
+      var d0 = f2p.filter(function(d){return d<1;}).length;
+      var d1 = f2p.filter(function(d){return d>=1 && d<3;}).length;
+      var d3 = f2p.filter(function(d){return d>=3;}).length;
+      var t = f2p.length;
+      html += '<div style="margin-top:11px;font-size:11px;color:var(--tx);font-weight:500;margin-bottom:6px">Thoi gian tu First Touch (lan vao dau tien) den khi mua:</div>';
+      html += '<div class="hb"><span class="hl" style="text-align:left;width:130px">Chot ngay (trong 24h)</span><div class="ht"><div class="hf" style="width:'+(d0/t*100)+'%;background:var(--gr)"></div></div><span class="hv" style="color:var(--gr)">'+Math.round(d0/t*100)+'%</span></div>';
+      html += '<div class="hb"><span class="hl" style="text-align:left;width:130px">Sau 1 - 3 ngay</span><div class="ht"><div class="hf" style="width:'+(d1/t*100)+'%;background:var(--am)"></div></div><span class="hv" style="color:var(--am)">'+Math.round(d1/t*100)+'%</span></div>';
+      html += '<div class="hb"><span class="hl" style="text-align:left;width:130px">Hoi lau (sau 3+ ngay)</span><div class="ht"><div class="hf" style="width:'+(d3/t*100)+'%;background:var(--bl)"></div></div><span class="hv" style="color:var(--bl)">'+Math.round(d3/t*100)+'%</span></div>';
+    }
+    setHtml('time-st', html);
   } else setHtml('time-st','<span style="font-size:11px;color:var(--mu)">Khong du timein_success.</span>');
 }
 
@@ -914,22 +1246,72 @@ function bUser(rows){
       scales:{x:{ticks:{font:{size:9},color:'#6b7280'},grid:{display:false}},y:{min:0,max:100,ticks:{font:{size:9},color:'#6b7280',callback:function(v){return v+'%';}},grid:{color:'rgba(255,255,255,.04)'}}}}});
   mkC('c-sab',{type:'doughnut',data:{labels:segs,datasets:[{data:abs,backgroundColor:sc,borderWidth:1,borderColor:'#13161d'}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:9},color:'#6b7280',padding:5,boxWidth:8}}},cutout:'54%'}});
+
+  /* CR theo lan thu may */
+  var uVisits={};
+  rows.forEach(function(r){if(!uVisits[r.user])uVisits[r.user]=[];uVisits[r.user].push(r);});
+  var vStats={1:{t:0,p:0},2:{t:0,p:0}}; /* 1=lan 1, 2=lan 2+ */
+  Object.keys(uVisits).forEach(function(uid){
+    uVisits[uid].sort(function(a,b){return a.tin-b.tin;});
+    uVisits[uid].forEach(function(r,idx){
+      var v=idx===0?1:2;
+      vStats[v].t++;
+      if(r.ok===1)vStats[v].p++;
+    });
+  });
+  var vCR1=vStats[1].t?+(vStats[1].p/vStats[1].t*100).toFixed(1):0;
+  var vCR2=vStats[2].t?+(vStats[2].p/vStats[2].t*100).toFixed(1):0;
+  mkC('c-svnum',{type:'bar',data:{labels:['Lần 1','Lần 2+'],datasets:[{label:'CR%',data:[vCR1,vCR2],backgroundColor:['#4f8ef7','#7c5cbf'],borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.parsed.y+'%';}}}},
+      scales:{x:{ticks:{font:{size:9},color:'#6b7280'},grid:{display:false}},y:{min:0,max:100,ticks:{font:{size:9},color:'#6b7280',callback:function(v){return v+'%';}},grid:{color:'rgba(255,255,255,.04)'}}}}});
+
   renderUserRevTable();
 }
-function renderUserRevTable(){
+function renderUserRevTable(page){
+  page = page || 1;
   var minrev=parseFloat(document.getElementById('minrev').value)||0;
   var segfil=(document.getElementById('segfil').value||'').toLowerCase();
   var users=Object.keys(UMAP).map(function(uid){
     var u=UMAP[uid];var s=segOf(u);var cr=u.events?+(u.paid/u.events*100).toFixed(1):0;
     return{uid:uid,events:u.events,paid:u.paid,rl:u.rl,cr:cr,seg:s,nprods:Object.keys(u.prods).length,email:u.email,phone:u.phone};
-  }).filter(function(x){return x.rl>=minrev&&(segfil===''||x.seg.toLowerCase().indexOf(segfil)>=0);}).sort(function(a,b){return b.rl-a.rl;}).slice(0,1000);
-  var tbl='<div class="tbl-wrap tbl-scroll"><table class="tbl"><thead><tr><th>#</th><th>Login</th><th>Phan khuc</th><th>So gio</th><th>Da TT</th><th>CR</th><th>Revenue bo lo</th><th>Email</th><th>SDT</th></tr></thead><tbody>';
-  users.forEach(function(x,i){
+  }).filter(function(x){return x.rl>=minrev&&(segfil===''||x.seg.toLowerCase().indexOf(segfil)>=0);});
+  users.sort(function(a,b){ return (b.rl||0)-(a.rl||0); });
+  window.EXPORT_DATA_URV = users;
+  var pagedData = users.slice((page-1)*1000, page*1000);
+  
+  var tbl='<div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:10px;color:var(--mu)"><span>Hiện '+pagedData.length+' / '+users.length+' user</span><button class="rbtn" onclick="exportURVExcel()" style="border-color:rgba(34,201,122,.4);color:var(--gr);font-size:9px;padding:2px 6px">Xuất Excel</button></div>';
+  tbl+='<div class="tbl-wrap tbl-scroll"><table class="tbl"><thead><tr><th>#</th><th>Login</th><th>Phân khúc</th><th>Số giỏ</th><th>Đã TT</th><th>CR</th><th>Revenue bỏ lỡ</th><th>Email</th><th>SĐT</th></tr></thead><tbody>';
+  pagedData.forEach(function(x,i){
     var cc=x.cr>=65?'var(--gr)':x.cr>=45?'var(--am)':'var(--rd)';
-    tbl+='<tr><td style="color:var(--mu2)">'+(i+1)+'</td><td>'+x.uid+'</td><td><span style="font-size:9px;padding:2px 5px;border-radius:8px;background:var(--sur2);color:var(--mu)">'+x.seg+'</span></td><td>'+x.events+'</td><td>'+x.paid+'</td><td style="color:'+cc+'">'+x.cr+'%</td><td style="color:var(--rd)">'+fNd(x.rl)+'</td><td style="font-size:9px;color:var(--bl)">'+x.email+'</td><td style="font-size:9px;color:var(--am)">'+x.phone+'</td></tr>';
+    tbl+='<tr><td style="color:var(--mu2)">'+((page-1)*1000+i+1)+'</td><td>'+x.uid+'</td><td><span style="font-size:9px;padding:2px 5px;border-radius:8px;background:var(--sur2);color:var(--mu)">'+x.seg+'</span></td><td>'+x.events+'</td><td>'+x.paid+'</td><td style="color:'+cc+'">'+x.cr+'%</td><td style="color:var(--rd)">'+fNd(x.rl)+'</td><td style="font-size:9px;color:var(--bl)">'+x.email+'</td><td style="font-size:9px;color:var(--am)">'+x.phone+'</td></tr>';
   });
   tbl+='</tbody></table></div>';
+  tbl+=getPaginationHTML(users.length, page, 'renderUserRevTable');
   setHtml('urv-wrap',tbl);
+}
+function exportURVExcel(){
+  exportExcel(window.EXPORT_DATA_URV||[], [
+    {header: 'Login', value: function(r){return r.uid;}},
+    {header: 'Phan khuc', value: function(r){return r.seg;}},
+    {header: 'So gio', value: function(r){return r.events;}},
+    {header: 'Da TT', value: function(r){return r.paid;}},
+    {header: 'CR', value: function(r){return r.cr;}},
+    {header: 'Revenue bo lo', value: function(r){return r.rl;}},
+    {header: 'Email', value: function(r){return r.email;}},
+    {header: 'SDT', value: function(r){return r.phone;}}
+  ], 'Phan_Khuc_Khach_Hang');
+}
+function exportURVExcel(){
+  exportExcel(window.EXPORT_DATA_URV||[], [
+    {header: 'Login', value: function(r){return r.uid;}},
+    {header: 'Phan khuc', value: function(r){return r.seg;}},
+    {header: 'So gio', value: function(r){return r.events;}},
+    {header: 'Da TT', value: function(r){return r.paid;}},
+    {header: 'CR', value: function(r){return r.cr;}},
+    {header: 'Revenue bo lo', value: function(r){return r.rl;}},
+    {header: 'Email', value: function(r){return r.email;}},
+    {header: 'SDT', value: function(r){return r.phone;}}
+  ], 'Phan_Khuc_Khach_Hang');
 }
 
 /* ────────── CART ────────── */
@@ -972,20 +1354,52 @@ function bTelesales(){
     '<div class="kc"><div class="kl">Co contact</div><div class="kv" style="color:var(--gr)">'+hasContact.toLocaleString()+'</div><div class="ks">Lay tu XLSX</div></div>');
   renderTSTable();
 }
-function renderTSTable(){
+function renderTSTable(page){
+  page = page || 1;
   var search=(document.getElementById('ts-search').value||'').toLowerCase();
   var minrev=parseFloat(document.getElementById('ts-minrev').value)||0;
-  var lim=parseInt(document.getElementById('ts-limit').value)||1000;
-  var data=TS_DATA.filter(function(x){return x.rl>=minrev&&(search===''||x.uid.toLowerCase().includes(search));}).slice(0,lim);
-  setEl('ts-count','Hien '+data.length+' / '+TS_DATA.filter(function(x){return x.rl>=minrev;}).length+' user');
-  var tbl='<table class="tbl"><thead><tr><th>#</th><th>Login</th><th>Phan khuc</th><th>Revenue bo lo</th><th>CR</th><th>So gio</th><th>SP chinh</th><th>Email</th><th>SDT</th><th>Lan dau</th></tr></thead><tbody>';
-  data.forEach(function(x,i){
+  var data=TS_DATA.filter(function(x){return x.rl>=minrev&&(search===''||x.uid.toLowerCase().includes(search));});
+  data.sort(function(a,b){ return (b.rl||0)-(a.rl||0); });
+  window.EXPORT_DATA_TS = data;
+  var pagedData = data.slice((page-1)*1000, page*1000);
+  
+  var tbl='<div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:10px;color:var(--mu)"><span>Hiện '+pagedData.length+' / '+data.length+' user</span><button class="rbtn" onclick="exportTSTableExcel()" style="border-color:rgba(34,201,122,.4);color:var(--gr);font-size:9px;padding:2px 6px">Xuất Excel</button></div>';
+  tbl+='<table class="tbl"><thead><tr><th>#</th><th>Login</th><th>Phân khúc</th><th>Revenue bỏ lỡ</th><th>CR</th><th>Số giỏ</th><th>SP chính</th><th>Email</th><th>SĐT</th><th>Alert</th></tr></thead><tbody>';
+  pagedData.forEach(function(x,i){
     var cc=x.cr===0?'var(--rd)':x.cr<50?'var(--am)':'var(--gr)';
     var pri=x.rl>=5e6?'var(--rd)':x.rl>=1e6?'var(--am)':'var(--mu)';
-    tbl+='<tr><td style="color:var(--mu2)">'+(i+1)+'</td><td style="color:var(--bl)">'+x.uid+'</td><td><span style="font-size:9px;padding:2px 5px;border-radius:8px;background:var(--sur2);color:var(--mu)">'+x.seg+'</span></td><td style="color:'+pri+';font-weight:600">'+fNd(x.rl)+'</td><td style="color:'+cc+'">'+x.cr+'%</td><td>'+x.events+'</td><td style="font-size:9px;color:var(--mu)">'+x.topProd.slice(0,16)+'</td><td style="font-size:9px;color:var(--bl)">'+x.email+'</td><td style="font-size:9px;color:var(--am)">'+x.phone+'</td><td style="font-size:9px">'+x.firstDate+'</td></tr>';
+    var alertStr = x.events >= 3 ? '<span style="font-size:9px;padding:2px 5px;border-radius:8px;background:rgba(240,79,79,.15);color:var(--rd)">Quay lại 3+ lần</span>' : '<span style="font-size:9px;color:var(--mu)">—</span>';
+    tbl+='<tr><td style="color:var(--mu2)">'+((page-1)*1000+i+1)+'</td><td style="color:var(--bl)">'+x.uid+'</td><td><span style="font-size:9px;padding:2px 5px;border-radius:8px;background:var(--sur2);color:var(--mu)">'+x.seg+'</span></td><td style="color:'+pri+';font-weight:600">'+fNd(x.rl)+'</td><td style="color:'+cc+'">'+x.cr+'%</td><td>'+x.events+'</td><td style="font-size:9px;color:var(--mu)">'+x.topProd.slice(0,16)+'</td><td style="font-size:9px;color:var(--bl)">'+x.email+'</td><td style="font-size:9px;color:var(--am)">'+x.phone+'</td><td>'+alertStr+'</td></tr>';
   });
   tbl+='</tbody></table>';
+  tbl+=getPaginationHTML(data.length, page, 'renderTSTable');
   setHtml('ts-wrap',tbl);
+}
+function exportTSTableExcel(){
+  exportExcel(window.EXPORT_DATA_TS||[], [
+    {header: 'Login', value: function(r){return r.uid;}},
+    {header: 'Phan khuc', value: function(r){return r.seg;}},
+    {header: 'Revenue bo lo', value: function(r){return r.rl;}},
+    {header: 'CR', value: function(r){return r.cr;}},
+    {header: 'So gio', value: function(r){return r.events;}},
+    {header: 'SP chinh', value: function(r){return r.topProd;}},
+    {header: 'Email', value: function(r){return r.email;}},
+    {header: 'SDT', value: function(r){return r.phone;}},
+    {header: 'Lan dau', value: function(r){return r.firstDate;}}
+  ], 'Telesales');
+}
+function exportTSTableExcel(){
+  exportExcel(window.EXPORT_DATA_TS||[], [
+    {header: 'Login', value: function(r){return r.uid;}},
+    {header: 'Phan khuc', value: function(r){return r.seg;}},
+    {header: 'Revenue bo lo', value: function(r){return r.rl;}},
+    {header: 'CR', value: function(r){return r.cr;}},
+    {header: 'So gio', value: function(r){return r.events;}},
+    {header: 'SP chinh', value: function(r){return r.topProd;}},
+    {header: 'Email', value: function(r){return r.email;}},
+    {header: 'SDT', value: function(r){return r.phone;}},
+    {header: 'Lan dau', value: function(r){return r.firstDate;}}
+  ], 'Telesales');
 }
 
 /* ────────── CONTACT RECOVERY (XLSX) ────────── */
@@ -1007,7 +1421,8 @@ function bContact(){
     '<div class="kc"><div class="kl">Chua TT co contact</div><div class="kv" style="color:var(--rd)">'+pending.toLocaleString()+'</div><div class="ks">Follow-up ngay</div></div>');
   renderContactTable();
 }
-function renderContactTable(){
+function renderContactTable(page){
+  page = page || 1;
   var statusF=document.getElementById('ct-status').value;
   var phoneF=document.getElementById('ct-phone').value;
   var search=(document.getElementById('ct-search').value||'').toLowerCase();
@@ -1020,15 +1435,43 @@ function renderContactTable(){
     if(phoneF==='no'&&(r.phone&&r.phone!==''))return false;
     if(search&&!(r.email+r.phone+r.login+r.gmail).toLowerCase().includes(search))return false;
     return true;
-  }).slice(0,1000);
-  setEl('ct-count','Hien '+data.length+' / '+CT_DATA.length.toLocaleString()+' co contact');
-  var tbl='<table class="tbl"><thead><tr><th>#</th><th>Login</th><th>Email</th><th>SDT</th><th>Trang thai</th><th>Revenue gio</th><th>Dich vu</th><th>Thoi gian vao</th></tr></thead><tbody>';
-  data.forEach(function(r,i){
+  });
+  data.sort(function(a,b){ return (b.totalCart||0)-(a.totalCart||0); });
+  window.EXPORT_DATA_CONTACT = data;
+  var pagedData = data.slice((page-1)*1000, page*1000);
+  
+  setEl('ct-count','Hiện '+pagedData.length+' / '+data.length.toLocaleString()+' kết quả');
+  var tbl='<div style="margin-bottom:8px"><button class="rbtn" onclick="exportContactTableExcel()" style="border-color:rgba(34,201,122,.4);color:var(--gr);font-size:10px">Xuất Excel</button></div>';
+  tbl+='<table class="tbl"><thead><tr><th>#</th><th>Login</th><th>Email</th><th>SĐT</th><th>Trạng thái</th><th>Revenue giỏ</th><th>Dịch vụ</th><th>Thời gian vào</th></tr></thead><tbody>';
+  pagedData.forEach(function(r,i){
     var stCol=(r.status&&(r.status.includes('Đã')||r.status.toLowerCase().includes('thanh to')))?'var(--gr)':(r.status&&(r.status.includes('Chưa')||r.status.includes('Chua')))?'var(--am)':'var(--mu)';
-    tbl+='<tr><td style="color:var(--mu2)">'+(i+1)+'</td><td style="color:var(--bl)">'+r.login+'</td><td style="font-size:9px;color:var(--bl)">'+r.email+'</td><td style="font-size:9px;color:var(--am)">'+r.phone+'</td><td style="font-size:9px;color:'+stCol+'">'+r.status+'</td><td style="font-size:9px;color:var(--rd)">'+r.totalCart.toLocaleString()+'</td><td style="font-size:9px;color:var(--mu);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+r.svc+'">'+r.svc.slice(0,30)+'</td><td style="font-size:9px">'+r.tinStr.slice(0,16)+'</td></tr>';
+    tbl+='<tr><td style="color:var(--mu2)">'+((page-1)*1000+i+1)+'</td><td style="color:var(--bl)">'+r.login+'</td><td style="font-size:9px;color:var(--bl)">'+r.email+'</td><td style="font-size:9px;color:var(--am)">'+r.phone+'</td><td style="font-size:9px;color:'+stCol+'">'+r.status+'</td><td style="font-size:9px;color:var(--rd)">'+(r.totalCart||0).toLocaleString()+'</td><td style="font-size:9px;color:var(--mu);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+r.svc+'">'+r.svc.slice(0,30)+'</td><td style="font-size:9px">'+r.tinStr.slice(0,16)+'</td></tr>';
   });
   tbl+='</tbody></table>';
+  tbl+=getPaginationHTML(data.length, page, 'renderContactTable');
   setHtml('ct-wrap',tbl);
+}
+function exportContactTableExcel(){
+  exportExcel(window.EXPORT_DATA_CONTACT||[], [
+    {header: 'Login', value: function(r){return r.login;}},
+    {header: 'Email', value: function(r){return r.email;}},
+    {header: 'SDT', value: function(r){return r.phone;}},
+    {header: 'Trang thai', value: function(r){return r.status;}},
+    {header: 'Revenue', value: function(r){return r.totalCart;}},
+    {header: 'Dich vu', value: function(r){return r.svc;}},
+    {header: 'Thoi gian', value: function(r){return r.tinStr;}}
+  ], 'Contact_Recovery');
+}
+function exportContactTableExcel(){
+  exportExcel(window.EXPORT_DATA_CONTACT||[], [
+    {header: 'Login', value: function(r){return r.login;}},
+    {header: 'Email', value: function(r){return r.email;}},
+    {header: 'SDT', value: function(r){return r.phone;}},
+    {header: 'Trang thai', value: function(r){return r.status;}},
+    {header: 'Revenue', value: function(r){return r.totalCart;}},
+    {header: 'Dich vu', value: function(r){return r.svc;}},
+    {header: 'Thoi gian', value: function(r){return r.tinStr;}}
+  ], 'Contact_Recovery');
 }
 function copyContactCSV(){
   var data=(CT_DATA||[]);
@@ -1075,6 +1518,19 @@ function bDomain(){
 }
 
 /* ────────── ANON (XLSX) ────────── */
+
+function renderAnonPage(page) {
+  window.ANON_PAGE = page;
+  bAnon();
+}
+function exportAnonExcel(){
+  exportExcel(window.EXPORT_DATA_ANON||[], [
+    {header: 'Gmail', value: function(r){return r.gmail;}},
+    {header: 'Dich vu', value: function(r){return r.svc;}},
+    {header: 'Revenue', value: function(r){return r.totalCart;}},
+    {header: 'Thoi gian', value: function(r){return r.tinStr;}}
+  ], 'Khach_Vang_Lai');
+}
 function bAnon(){
   document.getElementById('anon-empty').style.display='none';
   document.getElementById('anon-content').style.display='block';
@@ -1090,28 +1546,56 @@ function bAnon(){
     '<div class="kc"><div class="kl">Co Gmail</div><div class="kv" style="color:var(--gr)">'+hasGmail.length.toLocaleString()+'</div><div class="ks">Co the remarketing</div></div>'+
     '<div class="kc"><div class="kl">Revenue bo lo uoc tinh</div><div class="kv" style="color:var(--am)">'+fN(totRev)+'</div><div class="ks">Chua VAT</div></div>');
 
-  /* Products anon bo gio */
   var pd={};
   anonAb.forEach(function(r){if(!r.svc)return;r.svc.split(';').forEach(function(p){var s=p.split('|')[0].trim();if(s){pd[s]=(pd[s]||0)+1;}});});
   var pitems=Object.keys(pd).map(function(k){return{name:k,n:pd[k]};}).sort(function(a,b){return b.n-a.n;}).slice(0,15);
   var mxP=pitems.length?pitems[0].n:1;
   setHtml('anon-prod',mkBars(pitems,function(x){return x.name.slice(0,14);},function(x){return x.n/mxP*100;},100,function(x){return x.n+' lan';},null,'#7c5cbf'));
 
-  /* Hour distribution */
   var hd=Array.from({length:24},function(){return 0;});
   anon.forEach(function(r){if(r.tinStr){var h=parseInt((r.tinStr.split(' ')[1]||'0').split(':')[0]);if(h>=0&&h<24)hd[h]++;}});
   mkC('c-anon-h',{type:'bar',data:{labels:Array.from({length:24},function(_,i){return i+'h';}),datasets:[{label:'Luot vao gio',data:hd,backgroundColor:'#7c5cbf',borderRadius:2}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:8},color:'#6b7280',autoSkip:false},grid:{display:false}},y:{ticks:{font:{size:9},color:'#6b7280'},grid:{color:'rgba(255,255,255,.04)'}}}}});
 
-  /* Gmail list */
-  var gmailList=hasGmail.slice(0,1000);
-  var tbl='<table class="tbl"><thead><tr><th>#</th><th>Gmail</th><th>Dich vu bo gio</th><th>Revenue</th><th>Thoi gian</th></tr></thead><tbody>';
-  gmailList.forEach(function(r,i){tbl+='<tr><td style="color:var(--mu2)">'+(i+1)+'</td><td style="color:var(--bl);font-size:10px">'+r.gmail+'</td><td style="font-size:9px;color:var(--mu)">'+r.svc.slice(0,40)+'</td><td style="font-size:10px;color:var(--am)">'+r.totalCart.toLocaleString()+'</td><td style="font-size:9px">'+r.tinStr.slice(0,16)+'</td></tr>';});
+  hasGmail.sort(function(a,b){ return (b.totalCart||0)-(a.totalCart||0); });
+  window.EXPORT_DATA_ANON = hasGmail;
+  var page = window.ANON_PAGE || 1;
+  var pagedData = hasGmail.slice((page-1)*1000, page*1000);
+  
+  var tbl='<div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:10px;color:var(--mu)"><span>Hiện '+pagedData.length+' / '+hasGmail.length+' gmail</span><button class="rbtn" onclick="exportAnonExcel()" style="border-color:rgba(34,201,122,.4);color:var(--gr);font-size:9px;padding:2px 6px">Xuất Excel</button></div>';
+  tbl+='<table class="tbl"><thead><tr><th>#</th><th>Gmail</th><th>Dịch vụ bỏ giỏ</th><th>Revenue</th><th>Thời gian</th></tr></thead><tbody>';
+  pagedData.forEach(function(r,i){tbl+='<tr><td style="color:var(--mu2)">'+((page-1)*1000+i+1)+'</td><td style="color:var(--bl);font-size:10px">'+r.gmail+'</td><td style="font-size:9px;color:var(--mu)">'+r.svc.slice(0,40)+'</td><td style="font-size:10px;color:var(--am)">'+(r.totalCart||0).toLocaleString()+'</td><td style="font-size:9px">'+r.tinStr.slice(0,16)+'</td></tr>';});
   tbl+='</tbody></table>';
+  tbl+=getPaginationHTML(hasGmail.length, page, 'renderAnonPage');
   setHtml('anon-gmail',tbl);
+}
+function renderAnonPage(page) { window.ANON_PAGE = page; bAnon(); }
+function exportAnonExcel(){
+  exportExcel(window.EXPORT_DATA_ANON||[], [
+    {header: 'Gmail', value: function(r){return r.gmail;}},
+    {header: 'Dich vu', value: function(r){return r.svc;}},
+    {header: 'Revenue', value: function(r){return r.totalCart;}},
+    {header: 'Thoi gian', value: function(r){return r.tinStr;}}
+  ], 'Khach_Vang_Lai');
 }
 
 /* ────────── PENDING (XLSX) ────────── */
+
+function renderPendingPage(page) {
+  window.PENDING_PAGE = page;
+  bPending();
+}
+function exportPendingExcel(){
+  exportExcel(window.EXPORT_DATA_PENDING||[], [
+    {header: 'Login', value: function(r){return r.login;}},
+    {header: 'Email', value: function(r){return r.email;}},
+    {header: 'SDT', value: function(r){return r.phone;}},
+    {header: 'Ma don hang', value: function(r){return r.orderId;}},
+    {header: 'Revenue', value: function(r){return r.totalCart;}},
+    {header: 'Dich vu', value: function(r){return r.svc;}},
+    {header: 'Thoi gian', value: function(r){return r.tinStr;}}
+  ], 'Chua_Thanh_Toan');
+}
 function bPending(){
   document.getElementById('pending-empty').style.display='none';
   document.getElementById('pending-content').style.display='block';
@@ -1127,17 +1611,55 @@ function bPending(){
     '<div class="kc"><div class="kl">Co contact</div><div class="kv" style="color:var(--gr)">'+hasContact.toLocaleString()+'</div><div class="ks">Goi dien / email ngay</div></div>'+
     '<div class="kc"><div class="kl">Co ma don hang</div><div class="kv" style="color:var(--bl)">'+hasOrder.toLocaleString()+'</div><div class="ks">Co the check thanh toan</div></div>');
 
-  pend.sort(function(a,b){return b.totalCart-a.totalCart;});
-  var tbl='<table class="tbl"><thead><tr><th>#</th><th>Login</th><th>Email</th><th>SDT</th><th>Ma don hang</th><th>Revenue</th><th>Dich vu</th><th>Thoi gian vao</th></tr></thead><tbody>';
-  pend.slice(0,1000).forEach(function(r,i){
-    tbl+='<tr><td style="color:var(--mu2)">'+(i+1)+'</td><td style="color:var(--bl)">'+r.login+'</td><td style="font-size:9px;color:var(--bl)">'+r.email+'</td><td style="font-size:9px;color:var(--am)">'+r.phone+'</td><td style="font-size:9px;color:var(--pu)">'+r.orderId+'</td><td style="color:var(--rd);font-weight:600">'+r.totalCart.toLocaleString()+'</td><td style="font-size:9px;color:var(--mu)">'+r.svc.slice(0,35)+'</td><td style="font-size:9px">'+r.tinStr.slice(0,16)+'</td></tr>';
+  pend.sort(function(a,b){return (b.totalCart||0)-(a.totalCart||0);});
+  window.EXPORT_DATA_PENDING = pend;
+  var page = window.PENDING_PAGE || 1;
+  var pagedData = pend.slice((page-1)*1000, page*1000);
+  
+  var tbl='<div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:10px;color:var(--mu)"><span>Hiện '+pagedData.length+' / '+pend.length+' đơn</span><button class="rbtn" onclick="exportPendingExcel()" style="border-color:rgba(34,201,122,.4);color:var(--gr);font-size:9px;padding:2px 6px">Xuất Excel</button></div>';
+  tbl+='<table class="tbl"><thead><tr><th>#</th><th>Login</th><th>Email</th><th>SĐT</th><th>Mã đơn hàng</th><th>Revenue</th><th>Dịch vụ</th><th>Thời gian vào</th></tr></thead><tbody>';
+  pagedData.forEach(function(r,i){
+    tbl+='<tr><td style="color:var(--mu2)">'+((page-1)*1000+i+1)+'</td><td style="color:var(--bl)">'+r.login+'</td><td style="font-size:9px;color:var(--bl)">'+r.email+'</td><td style="font-size:9px;color:var(--am)">'+r.phone+'</td><td style="font-size:9px;color:var(--pu)">'+r.orderId+'</td><td style="color:var(--rd);font-weight:600">'+(r.totalCart||0).toLocaleString()+'</td><td style="font-size:9px;color:var(--mu)">'+r.svc.slice(0,35)+'</td><td style="font-size:9px">'+r.tinStr.slice(0,16)+'</td></tr>';
   });
   tbl+='</tbody></table>';
+  tbl+=getPaginationHTML(pend.length, page, 'renderPendingPage');
   setHtml('pend-tbl',tbl);
+}
+function renderPendingPage(page) { window.PENDING_PAGE = page; bPending(); }
+function exportPendingExcel(){
+  exportExcel(window.EXPORT_DATA_PENDING||[], [
+    {header: 'Login', value: function(r){return r.login;}},
+    {header: 'Email', value: function(r){return r.email;}},
+    {header: 'SDT', value: function(r){return r.phone;}},
+    {header: 'Ma don hang', value: function(r){return r.orderId;}},
+    {header: 'Revenue', value: function(r){return r.totalCart;}},
+    {header: 'Dich vu', value: function(r){return r.svc;}},
+    {header: 'Thoi gian', value: function(r){return r.tinStr;}}
+  ], 'Chua_Thanh_Toan');
 }
 
 /* ────────── HOSTING ────────── */
+
+function renderHostingPage(page) {
+  window.HOSTING_PAGE = page;
+  bHosting(window.CSV_ROWS||[]); // Assuming bHosting uses the passed rows or global. Wait, CSV_ROWS is local in parseCSV? No, I will just re-render bHosting with window.URL_ROWS?
+  // Actually, wait, re-rendering the whole bHosting is expensive, but for pagination it's okay.
+  // We can just rely on clicking the tab or passing window.LAST_ROWS_HOSTING
+}
+function exportHostingExcel(){
+  exportExcel(window.EXPORT_DATA_HOSTING||[], [
+    {header: 'Login', value: function(r){return r.uid;}},
+    {header: 'So gio', value: function(r){return r.events;}},
+    {header: 'Da TT', value: function(r){return r.paid;}},
+    {header: 'CR', value: function(r){return r.cr;}},
+    {header: 'Revenue bo lo', value: function(r){return r.rl;}},
+    {header: 'Email', value: function(r){return r.email;}},
+    {header: 'SDT', value: function(r){return r.phone;}}
+  ], 'Hosting_TopUsers');
+}
 function bHosting(rows){
+  rows = rows || window.LAST_ROWS_HOSTING || [];
+  window.LAST_ROWS_HOSTING = rows;
   var HOSTING_RE=/host|hosting|wordpress|wp\s|cloudhost|seolov/i;
   var hs=rows.filter(function(r){return HOSTING_RE.test(r.prod);});
   if(hs.length===0){setHtml('hs-kpi','<div style="font-size:12px;color:var(--mu);padding:10px 0">Khong tim thay san pham Hosting trong file CSV.</div>');return;}
@@ -1279,19 +1801,20 @@ function bHosting(rows){
       scales:{x:{ticks:{font:{size:10},color:'#6b7280'},grid:{display:false}},y:{min:0,max:100,ticks:{font:{size:10},color:'#6b7280',callback:function(v){return v+'%';}},grid:{color:'rgba(255,255,255,.04)'}}}}});
 
   /* Top users bo lo */
-  var topUsers=hsUserArr.filter(function(x){return x.rl>0;}).sort(function(a,b){return b.rl-a.rl;});
-  var tbl='<table class="tbl"><thead><tr><th>#</th><th>Login</th><th>So gio</th><th>Da TT</th><th>CR</th><th>Revenue bo lo</th><th>Email</th><th>SDT</th></tr></thead><tbody>';
-  topUsers.forEach(function(x,i){
+  var topUsers=hsUserArr.filter(function(x){return x.rl>0;}).sort(function(a,b){return (b.rl||0)-(a.rl||0);});
+  window.EXPORT_DATA_HOSTING = topUsers;
+  var page = window.HOSTING_PAGE || 1;
+  var pagedData = topUsers.slice((page-1)*1000, page*1000);
+  
+  var tbl='<div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:10px;color:var(--mu)"><span>Tổng: '+topUsers.length.toLocaleString()+' user (Hiện '+pagedData.length+')</span><button class="rbtn" onclick="exportHostingExcel()" style="border-color:rgba(34,201,122,.4);color:var(--gr);font-size:9px;padding:2px 6px">Xuất Excel</button></div>';
+  tbl+='<table class="tbl"><thead><tr><th>#</th><th>Login</th><th>Số giỏ</th><th>Đã TT</th><th>CR</th><th>Revenue bỏ lỡ</th><th>Email</th><th>SĐT</th></tr></thead><tbody>';
+  pagedData.forEach(function(x,i){
     var cc=x.cr===0?'var(--rd)':x.cr<40?'var(--am)':'var(--gr)';
-    tbl+='<tr><td style="color:var(--mu2)">'+(i+1)+'</td><td style="color:var(--bl)">'+x.uid+'</td><td>'+x.events+'</td><td>'+x.paid+'</td><td style="color:'+cc+'">'+x.cr+'%</td><td style="color:var(--rd)">'+fNd(x.rl)+'</td><td style="font-size:9px;color:var(--bl)">'+x.email+'</td><td style="font-size:9px;color:var(--am)">'+x.phone+'</td></tr>';
+    tbl+='<tr><td style="color:var(--mu2)">'+((page-1)*1000+i+1)+'</td><td style="color:var(--bl)">'+x.uid+'</td><td>'+x.events+'</td><td>'+x.paid+'</td><td style="color:'+cc+'">'+x.cr+'%</td><td style="color:var(--rd)">'+fNd(x.rl)+'</td><td style="font-size:9px;color:var(--bl)">'+x.email+'</td><td style="font-size:9px;color:var(--am)">'+x.phone+'</td></tr>';
   });
   tbl+='</tbody></table>';
+  tbl+=getPaginationHTML(topUsers.length, page, 'renderHostingPage');
   setHtml('hs-user-tbl',tbl);
-  /* Them dong tong so */
-  var countEl=document.createElement('div');
-  countEl.style.cssText='font-size:10px;color:var(--mu);margin-top:6px;font-family:var(--mo)';
-  countEl.textContent='Tong: '+topUsers.length.toLocaleString()+' user co revenue bo lo';
-  document.getElementById('hs-user-tbl').after(countEl);
 
   /* Insights */
   var worstPlan=plans.slice().sort(function(a,b){return a.cr-b.cr;})[0];
@@ -1355,6 +1878,431 @@ function bAction(rows,paid,ab,rl){
   setHtml('act-list',html);
 }
 
+
+/* ────────── URL TRACKING PARSE ────────── */
+function normUrlHdr(s){
+  /* strip diacritics for header matching */
+  return String(s||'').toLowerCase()
+    .replace(/[àáạảãâầấậẩẫăằắặẳẵ]/g,'a').replace(/[èéẹẻẽêềếệểễ]/g,'e')
+    .replace(/[ìíịỉĩ]/g,'i').replace(/[òóọỏõôồốộổỗơờớợởỡ]/g,'o')
+    .replace(/[ùúụủũưừứựửữ]/g,'u').replace(/[ỳýỵỷỹ]/g,'y').replace(/[đ]/g,'d')
+    .replace(/\s+/g,' ').trim();
+}
+function parseURL(rows){
+  if(!rows||rows.length<2)return[];
+  var hdr=rows[0].map(normUrlHdr);
+  var ci={user:-1,aff:-1,email:-1,phone:-1,link:-1,sec:-1,time:-1};
+  hdr.forEach(function(h,i){
+    if(ci.user<0&&(h==='ma khach hang'||h==='ma kh'||h.includes('login')||h.includes('ma kh')))ci.user=i;
+    if(ci.aff<0&&(h.includes('code affiliate')||h.includes('affiliate')))ci.aff=i;
+    if(ci.email<0&&(h==='email'||h.includes('email tai khoan')))ci.email=i;
+    if(ci.phone<0&&(h.includes('so dien thoai')||h==='sdt'||h.includes('phone')))ci.phone=i;
+    if(ci.link<0&&(h==='link'||h==='url'||h.includes('duong dan')))ci.link=i;
+    if(ci.sec<0&&(h.includes('so giay')||h.includes('giay truy cap')||h==='so giay'||h.includes('duration')))ci.sec=i;
+    if(ci.time<0&&(h.includes('thoi gian truy cap')||h.includes('thoi gian')||h.includes('timestamp')))ci.time=i;
+  });
+  /* Hard fallback: file structure stt[0],Ma KH[1],Code aff[2],Email[3],SDT[4],Link[5],GGmail[6],GGname[7],So giay[8],Thoi gian[9] */
+  if(ci.user<0)ci.user=1;
+  if(ci.aff<0)ci.aff=2;
+  if(ci.email<0)ci.email=3;
+  if(ci.phone<0)ci.phone=4;
+  if(ci.link<0)ci.link=5;
+  if(ci.sec<0)ci.sec=8;
+  if(ci.time<0)ci.time=9;
+
+  return rows.slice(1).filter(function(r){
+    /* skip rows where link column is empty */
+    return r[ci.link]&&String(r[ci.link]).trim()!==''&&String(r[ci.link]).trim()!=='none';
+  }).map(function(r){
+    var raw=String(r[ci.link]||'').trim();
+    /* Support tenten.vn/vi/... or just /path */
+    var path=raw.replace(/https?:\/\/[^\/]+(\/vi)?\/?/,'').split('?')[0].replace(/\/$/,'').trim()||'(homepage)';
+    var sec=parseInt(r[ci.sec])||0;
+    var uid=String(r[ci.user]||'').trim();
+    if(!uid||uid.toLowerCase()==='none'||uid==='null')uid='(anon)';
+    var aff=String(r[ci.aff]||'').trim();
+    if(!aff||aff.toLowerCase()==='none'||aff==='null')aff='';
+    var email=String(r[ci.email]||'').trim();
+    if(!email||email.toLowerCase()==='none@gmail.com'||email.toLowerCase()==='none'||email==='null')email='';
+    var phone=String(r[ci.phone]||'').trim();
+    if(!phone||phone==='999999999'||phone.toLowerCase()==='none'||phone==='null')phone='';
+    var ts=null;
+    try{
+      var ts_str=String(r[ci.time]||'').trim();
+      /* "23:59:45 25-04-2026" */
+      if(/\d{2}:\d{2}:\d{2}\s+\d{2}-\d{2}-\d{4}/.test(ts_str)){
+        var p=ts_str.split(/\s+/);
+        var dp=p[1].split('-');
+        ts=new Date(dp[2]+'-'+dp[1]+'-'+dp[0]+'T'+p[0]);
+      /* "2026-04-25 23:59:45" */
+      } else if(/\d{4}-\d{2}-\d{2}/.test(ts_str)){
+        ts=new Date(ts_str.replace(' ','T'));
+      } else {
+        ts=new Date(ts_str);
+      }
+      if(isNaN(ts.getTime()))ts=null;
+    }catch(e){ts=null;}
+    return{uid:uid,aff:aff,email:email,phone:phone,path:path,rawUrl:raw,sec:sec,ts:ts};
+  });
+}
+
+
+function pathCategory(path){
+  if(path==='(homepage)')return'home';
+  if(path.includes('Search'))return'search';
+  if(path.includes('cart/list'))return'cart';
+  if(path.includes('cart/payment-qrcode'))return'qr';
+  if(path.includes('cart/payment'))return'payment';
+  if(path.includes('cart/success'))return'success';
+  if(path.includes('Payment/error'))return'error';
+  if(path.includes('dang-nhap')||path.includes('dang-ky'))return'auth';
+  return'other';
+}
+
+var CAT_COLOR={'home':'#4f8ef7','search':'#7c5cbf','cart':'#f5a623','payment':'#5dcaa5','qr':'#22c97a','success':'#22c97a','error':'#f04f4f','auth':'#6b7280','other':'#b0aaa0'};
+
+
+function renderRepeatPage(page){
+  window.REPEAT_PAGE = page;
+  bURLTabs(); // Re-render to show page
+}
+function exportRepeatExcel(){
+  exportExcel(window.EXPORT_DATA_REPEAT||[], [
+    {header: 'Login ID', value: function(r){return r.uid;}},
+    {header: 'So lan vao gio', value: function(r){return r.events;}},
+    {header: 'Revenue bo lo', value: function(r){return r.rl;}},
+    {header: 'SDT', value: function(r){return r.phone;}},
+    {header: 'Email', value: function(r){return r.email;}}
+  ], 'Alert_User_3_Lan');
+}
+
+function renderAffPage(page){
+  window.AFF_PAGE = page;
+  bURLTabs(); // Re-render to show page
+}
+function exportAffExcel(){
+  exportExcel(window.EXPORT_DATA_AFF||[], [
+    {header: 'Affiliate Code', value: function(r){return r.aff;}},
+    {header: 'Luot', value: function(r){return r.visits;}},
+    {header: 'Users', value: function(r){return r.users;}},
+    {header: 'Avg time (s)', value: function(r){return r.avgSec;}},
+    {header: 'CR (%)', value: function(r){return r.cr;}},
+    {header: 'Revenue bo lo', value: function(r){return r.rl;}}
+  ], 'Affiliate_Data');
+}
+function bURLTabs(csvRows){
+  var rows=parseURL(URL_ROWS);
+  window.URL_ALL=rows;
+  if(!rows||rows.length===0){
+    ['jn','fn','af'].forEach(function(p){
+      var ee=document.getElementById(p+'-empty');if(ee){ee.textContent='Khong doc duoc du lieu URL. Kiem tra lai cot header.';ee.style.display='block';}
+      var ec=document.getElementById(p+'-content');if(ec)ec.style.display='none';
+    });
+    return;
+  }
+  var csvRL={};
+  if(JOINED.length>0){JOINED.filter(function(r){return r.ok===0;}).forEach(function(r){csvRL[r.user]=(csvRL[r.user]||0)+r.rev;});}
+  window.CSV_RL=csvRL;
+  var ujMap={};
+  rows.forEach(function(r){if(!ujMap[r.uid])ujMap[r.uid]={steps:[],email:r.email,phone:r.phone};ujMap[r.uid].steps.push(r);});
+  Object.keys(ujMap).forEach(function(uid){ujMap[uid].steps.sort(function(a,b){return(a.ts&&b.ts)?(a.ts-b.ts):0;});});
+  window.UJ_MAP=ujMap;
+
+  var totalRows=rows.length;
+  var anonRows=rows.filter(function(r){return r.uid==='(anon)';}).length;
+  var uids=Object.keys(ujMap).filter(function(u){return u!=='(anon)';});
+  var bounceRows=rows.filter(function(r){return r.sec===0;}).length;
+  var errorRows=rows.filter(function(r){return r.path.toLowerCase().includes('error');}).length;
+
+  /* ══ JOURNEY TAB ══ */
+  document.getElementById('jn-empty').style.display='none';
+  document.getElementById('jn-content').style.display='block';
+  setHtml('jn-kpi',
+    '<div class="kc"><div class="kl">Tong luot truy cap</div><div class="kv" style="color:var(--bl)">'+totalRows.toLocaleString('vi-VN')+'</div><div class="ks">URL events</div></div>'+
+    '<div class="kc"><div class="kl">Users da dang nhap</div><div class="kv" style="color:var(--gr)">'+uids.length.toLocaleString('vi-VN')+'</div><div class="ks">Unique login_id</div></div>'+
+    '<div class="kc"><div class="kl">Khach vang lai</div><div class="kv" style="color:var(--pu)">'+anonRows.toLocaleString('vi-VN')+'</div><div class="ks">'+(totalRows?Math.round(anonRows/totalRows*100):0)+'%</div></div>'+
+    '<div class="kc"><div class="kl">Bounce 0 giay</div><div class="kv" style="color:var(--rd)">'+bounceRows.toLocaleString('vi-VN')+'</div><div class="ks">'+(totalRows?Math.round(bounceRows/totalRows*100):0)+'%</div></div>'+
+    '<div class="kc"><div class="kl">Payment error</div><div class="kv" style="color:var(--rd)">'+errorRows.toLocaleString('vi-VN')+'</div><div class="ks">Goi dien ngay</div></div>');
+
+  var urlCount={};
+  rows.forEach(function(r){urlCount[r.path]=(urlCount[r.path]||0)+1;});
+  var urlArr=Object.keys(urlCount).map(function(k){return{path:k,n:urlCount[k],cat:pathCategory(k)};}).sort(function(a,b){return b.n-a.n;}).slice(0,20);
+  var maxU=urlArr.length?urlArr[0].n:1;
+  setHtml('jn-url-bars',urlArr.map(function(x){
+    var col=CAT_COLOR[x.cat]||'#6b7280';var w=Math.round(x.n/maxU*100);var pct=totalRows?Math.round(x.n/totalRows*100):0;
+    return '<div class="hb"><span class="hl" style="width:200px;font-family:var(--mo);font-size:9px" title="/'+x.path+'">'+x.path.slice(0,26)+'</span><div class="ht"><div class="hf" style="width:'+w+'%;background:'+col+'"></div></div><span class="hv" style="color:'+col+'">'+x.n.toLocaleString('vi-VN')+'</span><span class="hv2" style="color:'+col+'">'+pct+'%</span></div>';
+  }).join(''));
+
+  var patternDef={
+    'Mua thanh cong':{col:'#22c97a',n:0,action:'Benchmark — hoc hanh trinh cua ho de nhan rong.'},
+    'Search roi bo':{col:'#7c5cbf',n:0,action:'Sales: goi dien trong 30 phut. Marketing: them CTA trong trang Search.'},
+    'Cart chua TT':{col:'#f5a623',n:0,action:'Gui email abandoned sau 1h. Sales goi neu don > 500.000 VND.'},
+    'Payment error':{col:'#f04f4f',n:0,action:'KHAN CAP: goi dien ngay trong ngay.'},
+    'Dang nhap roi bo':{col:'#6b7280',n:0,action:'Kiem tra: redirect sau dang nhap co dung khong?'},
+    'Khach vang lai':{col:'#a29bfe',n:0,action:'Chay retargeting Google/Meta voi danh sach Gmail.'},
+    'Browse other':{col:'#b0aaa0',n:0,action:'Email nurture — khach dang nghien cuu.'}
+  };
+  Object.keys(ujMap).forEach(function(uid){
+    var cats=ujMap[uid].steps.map(function(s){return pathCategory(s.path);});
+    if(uid==='(anon)'){patternDef['Khach vang lai'].n+=ujMap[uid].steps.length;return;}
+    if(cats.some(function(c){return c==='success';}))patternDef['Mua thanh cong'].n++;
+    else if(cats.some(function(c){return c==='error';}))patternDef['Payment error'].n++;
+    else if(cats.some(function(c){return c==='cart';}))patternDef['Cart chua TT'].n++;
+    else if(cats.some(function(c){return c==='search';}))patternDef['Search roi bo'].n++;
+    else if(cats.every(function(c){return c==='home'||c==='auth';}))patternDef['Dang nhap roi bo'].n++;
+    else patternDef['Browse other'].n++;
+  });
+  var pMax=Math.max.apply(null,Object.keys(patternDef).map(function(k){return patternDef[k].n;}))||1;
+  var pHtml='<div style="display:flex;flex-direction:column;gap:6px">';
+  Object.keys(patternDef).forEach(function(k){
+    var p=patternDef[k];if(p.n===0)return;
+    pHtml+='<div style="background:var(--sur2);border-radius:7px;padding:9px 12px"><div class="hb" style="margin-bottom:4px"><span class="hl" style="width:150px;font-weight:500;color:var(--tx)">'+k+'</span><div class="ht"><div class="hf" style="width:'+Math.round(p.n/pMax*100)+'%;background:'+p.col+'"></div></div><span class="hv" style="color:'+p.col+'">'+p.n.toLocaleString('vi-VN')+'</span></div>';
+    pHtml+='<div style="font-size:10px;color:var(--mu);padding-left:150px;line-height:1.5">&#8594; <b style="color:var(--tx)">Lam gi:</b> '+p.action+'</div></div>';
+  });
+  pHtml+='</div>';
+  setHtml('jn-patterns',pHtml);
+  renderJourney();
+
+  /* ══ FUNNEL TAB ══ */
+  document.getElementById('fn-empty').style.display='none';
+  document.getElementById('fn-content').style.display='block';
+  var fSteps=[
+    {key:'home',   label:'1. Homepage',        filter:function(r){return r.path==='(homepage)';}},
+    {key:'search', label:'2. Search/GPT',       filter:function(r){return r.path.toLowerCase().includes('search');}},
+    {key:'auth',   label:'3. Dang nhap',        filter:function(r){return r.path.includes('dang-nhap')||r.path.includes('dang-ky');}},
+    {key:'cart',   label:'4. Cart/List',        filter:function(r){return r.path.includes('cart/list');}},
+    {key:'payment',label:'5. Cart/Payment',     filter:function(r){return r.path.includes('cart/payment')&&!r.path.includes('qrcode')&&!r.path.toLowerCase().includes('error');}},
+    {key:'qr',     label:'6. Payment QRCode',   filter:function(r){return r.path.includes('payment-qrcode');}},
+    {key:'success',label:'7. Cart/Success ✓',   filter:function(r){return r.path.includes('cart/success');}}
+  ];
+  var fC=fSteps.map(function(s){return{label:s.label,n:rows.filter(s.filter).length,col:CAT_COLOR[s.key]||'#6b7280'};});
+  mkC('c-fn-funnel',{type:'bar',data:{labels:fC.map(function(x){return x.label;}),datasets:[{label:'Luot',data:fC.map(function(x){return x.n;}),backgroundColor:fC.map(function(x){return x.col;}),borderRadius:4}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){var n=fC[ctx.dataIndex].n;var prev=ctx.dataIndex>0?fC[ctx.dataIndex-1].n:n;var d=prev>0?Math.round((prev-n)/prev*100):0;return n.toLocaleString('vi-VN')+' luot'+(ctx.dataIndex>0?' (drop: '+d+'%)':'');}}}},
+      scales:{x:{ticks:{font:{size:9},color:'#6b7280',callback:function(v){return v.toLocaleString('vi-VN');}},grid:{color:'rgba(255,255,255,.04)'}},y:{ticks:{font:{size:10},color:'#6b7280'},grid:{display:false}}}}});
+  var timeByPath={};
+  rows.forEach(function(r){var cat=pathCategory(r.path);if(!timeByPath[cat])timeByPath[cat]=[];if(r.sec>0)timeByPath[cat].push(r.sec);});
+  var tCats=['home','search','auth','cart','payment','qr','success'];
+  var tAvg=tCats.map(function(c){var arr=timeByPath[c]||[];return arr.length?Math.round(arr.reduce(function(a,b){return a+b;},0)/arr.length):0;});
+  mkC('c-fn-time',{type:'bar',data:{labels:tCats.map(function(c){return c.charAt(0).toUpperCase()+c.slice(1);}),datasets:[{label:'Avg giay',data:tAvg,backgroundColor:tCats.map(function(c){return CAT_COLOR[c]||'#6b7280';}),borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.parsed.y+'s';}}}},
+      scales:{x:{ticks:{font:{size:9},color:'#6b7280'},grid:{display:false}},y:{ticks:{font:{size:9},color:'#6b7280',callback:function(v){return v+'s';}},grid:{color:'rgba(255,255,255,.04)'}}}}});
+
+  var stopCount = Array(fSteps.length).fill(0);
+  var stopSec = Array(fSteps.length).fill(0);
+  Object.keys(ujMap).forEach(function(uid){
+    var steps = ujMap[uid].steps;
+    var maxIdx = -1;
+    var timeSum = 0;
+    steps.forEach(function(r){
+      var idx = fSteps.findIndex(function(s){ return s.filter(r); });
+      if(idx > maxIdx) { maxIdx = idx; timeSum = r.sec; }
+      else if(idx === maxIdx) { timeSum += r.sec; }
+    });
+    if(maxIdx >= 0) {
+      stopCount[maxIdx]++;
+      stopSec[maxIdx] += timeSum;
+    }
+  });
+
+  var dropActions=['Marketing: them noi dung dan vao Search ro hon.','Marketing: them CTA trong ket qua Search — dung de user thoat.','Kiem tra redirect sau dang nhap co dung khong?','DIEM ROI LON NHAT — badge bao mat, gia/thang, live chat sau 60s.','Trang Payment co loi? Kiem tra tren mobile.','QR hien roi nhung chua quet — SMS nhac nho.'];
+  var dHtml='<table class="tbl"><thead><tr><th>Buoc</th><th>Vao (luot)</th><th>Tiep (luot)</th><th>Drop-off</th><th>User dung & Avg time</th><th>Action</th></tr></thead><tbody>';
+  for(var di=0;di<fC.length-1;di++){
+    var cur=fC[di],nxt=fC[di+1],drop=cur.n>0?Math.round((cur.n-nxt.n)/cur.n*100):0;
+    var dc=drop>70?'var(--rd)':drop>40?'var(--am)':'var(--gr)';
+    var sev=drop>70?'<span style="font-size:9px;padding:1px 5px;border-radius:6px;background:rgba(240,79,79,.15);color:var(--rd)">Nghiem trong</span>':drop>40?'<span style="font-size:9px;padding:1px 5px;border-radius:6px;background:rgba(245,166,35,.15);color:var(--am)">Theo doi</span>':'<span style="font-size:9px;padding:1px 5px;border-radius:6px;background:rgba(34,201,122,.15);color:var(--gr)">OK</span>';
+    var uStop = stopCount[di];
+    var avgTimeStop = uStop > 0 ? Math.round(stopSec[di]/uStop) : 0;
+    var stopStr = '<span style="color:var(--rd)">' + uStop + ' users</span><br><span style="font-size:9px;color:var(--mu)">' + avgTimeStop + 's</span>';
+    dHtml+='<tr><td style="font-weight:500;color:var(--tx)">'+cur.label.replace(/^\d+\. /,'')+' &rarr; '+nxt.label.replace(/^\d+\. /,'')+'</td><td style="font-family:var(--mo)">'+cur.n.toLocaleString('vi-VN')+'</td><td style="font-family:var(--mo)">'+nxt.n.toLocaleString('vi-VN')+'</td><td><b style="color:'+dc+';font-family:var(--mo)">'+drop+'%</b> '+sev+'</td><td>'+stopStr+'</td><td style="font-size:11px;color:var(--mu)">'+dropActions[di]+'</td></tr>';
+  }
+  dHtml+='</tbody></table>';
+  setHtml('fn-dropoff',dHtml);
+
+  var errUsers=[];
+  Object.keys(ujMap).forEach(function(uid){
+    var steps=ujMap[uid].steps;
+    if(steps.some(function(s){return s.path.toLowerCase().includes('error');})){
+      errUsers.push({uid:uid,success:steps.some(function(s){return s.path.includes('success');}),rl:csvRL[uid]||0,email:ujMap[uid].email,phone:ujMap[uid].phone});
+    }
+  });
+  if(errUsers.length>0){
+    var eHtml='<div style="background:rgba(240,79,79,.06);border:.5px solid rgba(240,79,79,.3);border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:11px;color:var(--rd)">&#9888; '+errUsers.length+' user gap loi thanh toan. Ai chua mua lai = revenue mat hoan toan.</div>';
+    eHtml+='<table class="tbl"><thead><tr><th>Login ID</th><th>Revenue bo lo</th><th>Ket qua</th><th>SDT</th><th>Hanh dong</th></tr></thead><tbody>';
+    errUsers.sort(function(a,b){return b.rl-a.rl;}).forEach(function(x){
+      eHtml+='<tr><td style="color:var(--bl)">'+x.uid+'</td><td style="color:var(--rd);font-family:var(--mo)">'+(x.rl?fNd(x.rl)+' &#8363;':'—')+'</td><td>'+(x.success?'<span style="color:var(--gr)">Da mua lai</span>':'<span style="color:var(--rd);font-weight:600">Chua mua lai</span>')+'</td><td style="font-size:9px;color:var(--am)">'+x.phone+'</td><td>'+(x.success?'—':'<span style="color:var(--rd)">Goi dien ngay</span>')+'</td></tr>';
+    });
+    eHtml+='</tbody></table>';
+    setHtml('fn-errors',eHtml);
+  } else setHtml('fn-errors','<span style="font-size:11px;color:var(--mu)">Khong co Payment/error.</span>');
+
+  var srUsers=[];
+  Object.keys(ujMap).forEach(function(uid){
+    if(uid==='(anon)')return;
+    var steps=ujMap[uid].steps;
+    var srSec=steps.filter(function(s){return s.path.toLowerCase().includes('search');}).reduce(function(a,s){return a+s.sec;},0);
+    if(srSec>=30&&!steps.some(function(s){return s.path.includes('success');})){
+      srUsers.push({uid:uid,srSec:srSec,hasCart:steps.some(function(s){return s.path.includes('cart/list');}),rl:csvRL[uid]||0,phone:ujMap[uid].phone,email:ujMap[uid].email});
+    }
+  });
+  srUsers.sort(function(a,b){return b.srSec-a.srSec;});
+  if(srUsers.length>0){
+    var sHtml='<div style="background:rgba(124,92,191,.06);border:.5px solid rgba(124,92,191,.3);border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:11px;color:var(--pu)">'+srUsers.length+' user dung Search lau (>= 30s) nhung chua mua. Them CTA manh trong trang Search.</div>';
+    sHtml+='<table class="tbl"><thead><tr><th>Login ID</th><th>Giay Search</th><th>Vao gio?</th><th>Revenue bo lo</th><th>SDT / Email</th></tr></thead><tbody>';
+    srUsers.slice(0,30).forEach(function(x){
+      sHtml+='<tr><td style="color:var(--pu)">'+x.uid+'</td><td style="color:var(--am);font-family:var(--mo)">'+x.srSec.toLocaleString('vi-VN')+'s</td><td>'+(x.hasCart?'<span style="color:var(--am)">Co</span>':'<span style="color:var(--mu)">Chua</span>')+'</td><td style="color:var(--rd)">'+(x.rl?fNd(x.rl)+' &#8363;':'—')+'</td><td style="font-size:9px;color:var(--mu)">'+(x.phone||x.email||'—')+'</td></tr>';
+    });
+    sHtml+='</tbody></table>';
+    setHtml('fn-search',sHtml);
+  } else setHtml('fn-search','<span style="font-size:11px;color:var(--mu)">Chua co user SearchGPT lau.</span>');
+
+  /* ══ ALERT 3+ LAN (FUNNEL) ══ */
+  var repeatUsers=[];
+  Object.keys(ujMap).forEach(function(uid){
+    if(uid==='(anon)') return;
+    var u = window.UMAP && window.UMAP[uid];
+    if(u && u.events >= 3 && u.paid === 0){
+      repeatUsers.push({uid:uid, events:u.events, rl:u.rl||0, email:u.email||ujMap[uid].email, phone:u.phone||ujMap[uid].phone});
+    }
+  });
+  repeatUsers.sort(function(a,b){ return (b.rl||0)-(a.rl||0); });
+  window.EXPORT_DATA_REPEAT = repeatUsers;
+  var pageRepeat = window.REPEAT_PAGE || 1;
+  var pagedRepeat = repeatUsers.slice((pageRepeat-1)*1000, pageRepeat*1000);
+  
+  if(repeatUsers.length>0){
+    var rHtml='<div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:10px;color:var(--mu)"><span>Hiện '+pagedRepeat.length+' / '+repeatUsers.length+' users</span><button class="rbtn" onclick="exportRepeatExcel()" style="border-color:rgba(34,201,122,.4);color:var(--gr);font-size:9px;padding:2px 6px">Xuất Excel</button></div>';
+    rHtml+='<table class="tbl"><thead><tr><th>#</th><th>Login ID</th><th>Số lần vào giỏ</th><th>Revenue bỏ lỡ</th><th>SĐT</th><th>Email</th></tr></thead><tbody>';
+    pagedRepeat.forEach(function(x,i){
+      rHtml+='<tr><td style="color:var(--mu2)">'+((pageRepeat-1)*1000+i+1)+'</td><td style="color:var(--rd);font-weight:600">'+x.uid+'</td><td>'+x.events+' lần</td><td style="color:var(--rd)">'+(x.rl?fNd(x.rl)+' &#8363;':'—')+'</td><td style="font-size:9px;color:var(--am)">'+(x.phone||'—')+'</td><td style="font-size:9px;color:var(--bl)">'+(x.email||'—')+'</td></tr>';
+    });
+    rHtml+='</tbody></table>';
+    rHtml+=getPaginationHTML(repeatUsers.length, pageRepeat, 'renderRepeatPage');
+    setHtml('fn-alert-repeat',rHtml);
+  } else {
+    setHtml('fn-alert-repeat','<span style="font-size:11px;color:var(--mu)">Không có user nào quay lại 3+ lần chưa mua.</span>');
+  }
+
+  /* ══ AFFILIATE TAB ══ */
+  document.getElementById('af-empty').style.display='none';
+  document.getElementById('af-content').style.display='block';
+  var affMap={};
+  rows.forEach(function(r){if(!r.aff)return;if(!affMap[r.aff])affMap[r.aff]={visits:0,users:new Set(),totalSec:0};affMap[r.aff].visits++;affMap[r.aff].users.add(r.uid);affMap[r.aff].totalSec+=r.sec;});
+  var affCR={};
+  if(JOINED.length>0){
+    var cbu={};JOINED.forEach(function(r){if(!cbu[r.user])cbu[r.user]={paid:0,events:0,rl:0};cbu[r.user].events++;if(r.ok===1)cbu[r.user].paid++;else cbu[r.user].rl+=r.rev;});
+    Object.keys(affMap).forEach(function(aff){var tp=0,te=0,trl=0;Array.from(affMap[aff].users).forEach(function(uid){if(cbu[uid]){tp+=cbu[uid].paid;te+=cbu[uid].events;trl+=cbu[uid].rl;}});affCR[aff]={cr:te?+(tp/te*100).toFixed(1):null,rl:trl};});
+  }
+  var affArr=Object.keys(affMap).map(function(k){var v=affMap[k];var crd=affCR[k];return{aff:k,visits:v.visits,users:v.users.size,avgSec:v.visits?Math.round(v.totalSec/v.visits):0,cr:crd?crd.cr:null,rl:crd?crd.rl:0};}).sort(function(a,b){return b.visits-a.visits;});
+  var noAff=rows.filter(function(r){return!r.aff;}).length;
+  var totalAff=rows.length-noAff;
+  setHtml('af-kpi',
+    '<div class="kc"><div class="kl">Tong codes</div><div class="kv" style="color:var(--bl)">'+Object.keys(affMap).length+'</div></div>'+
+    '<div class="kc"><div class="kl">Luot co aff</div><div class="kv" style="color:var(--am)">'+totalAff.toLocaleString('vi-VN')+'</div><div class="ks">'+(rows.length?Math.round(totalAff/rows.length*100):0)+'%</div></div>'+
+    '<div class="kc"><div class="kl">Direct</div><div class="kv" style="color:var(--mu)">'+noAff.toLocaleString('vi-VN')+'</div></div>'+
+    '<div class="kc"><div class="kl">Avg time (co aff)</div><div class="kv" style="color:var(--te)">'+(totalAff?Math.round(rows.filter(function(r){return r.aff;}).reduce(function(a,r){return a+r.sec;},0)/totalAff):0)+'s</div></div>');
+  var mxV=affArr.length?affArr[0].visits:1;
+  var mxCR=Math.max.apply(null,affArr.map(function(x){return x.cr||0;}))||100;
+  setHtml('af-vol-bars',affArr.slice(0,15).map(function(x){return '<div class="hb"><span class="hl" style="font-family:var(--mo);font-size:9px" title="'+x.aff+'">'+x.aff.slice(0,16)+'</span><div class="ht"><div class="hf" style="width:'+Math.round(x.visits/mxV*100)+'%;background:#4f8ef7"></div></div><span class="hv">'+x.visits.toLocaleString('vi-VN')+'</span><span class="hv2">'+x.users+'u</span></div>';}).join(''));
+  if(Object.keys(affCR).length>0){
+    setHtml('af-cr-bars',affArr.slice().sort(function(a,b){return(b.cr||0)-(a.cr||0);}).slice(0,15).map(function(x){var col=x.cr===null?'#6b7280':crC(x.cr);return '<div class="hb"><span class="hl" style="font-family:var(--mo);font-size:9px" title="'+x.aff+'">'+x.aff.slice(0,16)+'</span><div class="ht"><div class="hf" style="width:'+Math.round((x.cr||0)/mxCR*100)+'%;background:'+col+'"></div></div><span class="hv" style="color:'+col+'">'+(x.cr!==null?x.cr+'%':'N/A')+'</span></div>';}).join(''));
+  } else setHtml('af-cr-bars','<span style="font-size:11px;color:var(--mu)">Upload CSV de tinh CR.</span>');
+  affArr.sort(function(a,b){ return (b.rl||0)-(a.rl||0); }); // sort by revenue lo descending
+  window.EXPORT_DATA_AFF = affArr;
+  var pageAff = window.AFF_PAGE || 1;
+  var pagedAff = affArr.slice((pageAff-1)*1000, pageAff*1000);
+
+  var tHtml='<div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:10px;color:var(--mu)"><span>Hiện '+pagedAff.length+' / '+affArr.length+' affiliate codes</span><button class="rbtn" onclick="exportAffExcel()" style="border-color:rgba(34,201,122,.4);color:var(--gr);font-size:9px;padding:2px 6px">Xuất Excel</button></div>';
+  tHtml+='<table class="tbl"><thead><tr><th>#</th><th>Affiliate Code</th><th>Lượt</th><th>Users</th><th>Avg time</th><th>CR</th><th>Revenue bỏ lỡ</th><th>Đánh giá</th></tr></thead><tbody>';
+  pagedAff.forEach(function(x,i){var cc=x.cr===null?'var(--mu)':crC(x.cr);var ev=x.cr===null?'':x.cr>=65?'<span style="color:var(--gr)">Cao</span>':x.cr>=45?'<span style="color:var(--am)">TB</span>':'<span style="color:var(--rd)">Thấp</span>';tHtml+='<tr><td style="color:var(--mu2)">'+((pageAff-1)*1000+i+1)+'</td><td style="font-family:var(--mo);font-size:9px;color:var(--bl)">'+x.aff+'</td><td style="font-family:var(--mo)">'+x.visits.toLocaleString('vi-VN')+'</td><td>'+x.users+'</td><td style="color:var(--am)">'+x.avgSec+'s</td><td style="color:'+cc+'">'+(x.cr!==null?x.cr+'%':'—')+'</td><td style="color:var(--rd)">'+(x.rl?fNd(x.rl)+' &#8363;':'—')+'</td><td>'+ev+'</td></tr>';});
+  tHtml+='</tbody></table>';
+  tHtml+=getPaginationHTML(affArr.length, pageAff, 'renderAffPage');
+  setHtml('af-tbl',tHtml);
+}
+
+function renderJourney(page){
+  page = page || 1;
+  var ujMap=window.UJ_MAP||{};var csvRL=window.CSV_RL||{};
+  var search=(document.getElementById('jn-search').value||'').toLowerCase();
+  var allUids=Object.keys(ujMap).filter(function(uid){return search===''||uid.toLowerCase().includes(search);});
+  
+  /* Sort: by revenue lost desc */
+  allUids.sort(function(a,b){
+    return (csvRL[b]||0)-(csvRL[a]||0);
+  });
+  
+  var pagedUids = allUids.slice((page-1)*1000, page*1000);
+  
+  /* PREPARE EXPORT DATA */
+  var exportData = allUids.map(function(uid){
+    var u=ujMap[uid]; var rl=csvRL[uid]||0;
+    var stepsStr = u.steps.map(function(s){return s.path;}).join(' -> ');
+    return {uid:uid, email:u.email, phone:u.phone, rl:rl, stepsCount:u.steps.length, steps:stepsStr};
+  });
+  window.EXPORT_DATA_JN = exportData;
+  
+  var html='<div style="display:flex;justify-content:space-between;margin-bottom:8px;align-items:center">';
+  html+='<div style="display:flex;gap:8px;flex-wrap:wrap;font-size:10px;color:var(--mu)">';
+  [['home','Homepage'],['search','Search'],['auth','Auth'],['cart','Cart'],['payment','Payment'],['success','Success'],['error','Error']].forEach(function(l){html+='<span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:2px;background:'+CAT_COLOR[l[0]]+'"></span>'+l[1]+'</span>';});
+  html+='</div>';
+  html+='<button class="rbtn" onclick="exportJourneyExcel()" style="border-color:rgba(34,201,122,.4);color:var(--gr);font-size:9px;padding:2px 6px">Xuất Excel</button></div>';
+  
+  html+='<div style="font-size:10px;color:var(--mu);margin-bottom:10px">Hiện '+pagedUids.length+' / '+allUids.length+' users</div>';
+  
+  pagedUids.forEach(function(uid){
+    var u=ujMap[uid];var steps=u.steps;var rl=csvRL[uid]||0;
+    var success=steps.some(function(s){return s.path.includes('success');});
+    var hasError=steps.some(function(s){return s.path.toLowerCase().includes('error');});
+    var hasCart=steps.some(function(s){return s.path.includes('cart/list');});
+    var hasSearch=steps.some(function(s){return s.path.toLowerCase().includes('search');});
+    var sc=success?'var(--gr)':hasError?'var(--rd)':'var(--am)';
+    var st=success?'&#10003; Đã mua':hasError?'&#9888; Lỗi TT':hasCart?'Trong giỏ':'Chưa vào giỏ';
+    var act='';
+    if(!success){if(hasError)act='Gọi điện ngay — gặp lỗi thanh toán';else if(hasCart&&rl>500000)act='Telesales: đang trong giỏ, '+fNd(rl)+' &#8363; bỏ lỡ';else if(hasCart)act='Email abandoned cart sau 1h';else if(hasSearch)act='Marketing: thêm CTA trong trang Search';}
+    html+='<div style="background:var(--sur2);border-radius:8px;padding:10px 12px;margin-bottom:7px;border-left:2px solid '+sc+'">';
+    html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">';
+    html+='<span style="font-family:var(--mo);font-size:11px;font-weight:600;color:var(--bl)">'+uid+'</span>';
+    html+='<span style="font-size:9px;padding:2px 8px;border-radius:10px;background:'+sc+'22;color:'+sc+';font-weight:500">'+st+'</span>';
+    if(rl>0)html+='<span style="font-size:10px;color:var(--rd);font-family:var(--mo)">'+fNd(rl)+' &#8363;</span>';
+    if(u.phone)html+='<span style="font-size:9px;color:var(--am);margin-left:auto">&#128222; '+u.phone+'</span>';
+    else if(u.email)html+='<span style="font-size:9px;color:var(--bl);margin-left:auto">'+u.email+'</span>';
+    html+='<span style="font-size:9px;color:var(--mu)">'+steps.length+' buoc</span>';
+    html+='</div>';
+    html+='<div style="display:flex;gap:2px;flex-wrap:wrap;align-items:center'+(act?';margin-bottom:6px':'')+'">';
+    steps.forEach(function(s,i){
+      var cat=pathCategory(s.path);var col=CAT_COLOR[cat]||'#6b7280';
+      var lbl=s.path.replace(/(cart\/|Search\/|Payment\/)/,'').slice(0,14);
+      html+='<span style="font-size:9px;padding:2px 5px;border-radius:3px;background:'+col+'20;color:'+col+';font-family:var(--mo);white-space:nowrap;border:.5px solid '+col+'40" title="'+s.path+(s.sec?' — '+s.sec+'s':'')+'">'+lbl+(s.sec>0?' <span style="opacity:.6">'+s.sec+'s</span>':'')+'</span>';
+      if(i<steps.length-1)html+='<span style="color:var(--mu2);font-size:9px">&#8250;</span>';
+    });
+    html+='</div>';
+    if(act)html+='<div style="font-size:10px;color:var(--mu);border-top:.5px solid var(--bd);padding-top:5px">&#8594; <b style="color:var(--tx)">Hanh dong:</b> '+act+'</div>';
+    html+='</div>';
+  });
+  html+=getPaginationHTML(allUids.length, page, 'renderJourney');
+  setHtml('jn-table',html||'<span style="font-size:11px;color:var(--mu)">Không có dữ liệu.</span>');
+}
+function exportJourneyExcel(){
+  exportExcel(window.EXPORT_DATA_JN||[], [
+    {header: 'Login ID', value: function(r){return r.uid;}},
+    {header: 'Email', value: function(r){return r.email;}},
+    {header: 'SDT', value: function(r){return r.phone;}},
+    {header: 'Revenue bo lo', value: function(r){return r.rl;}},
+    {header: 'So buoc', value: function(r){return r.stepsCount;}},
+    {header: 'Hanh trinh', value: function(r){return r.steps;}}
+  ], 'Hanh_Trinh_Khach_Hang');
+}
+function exportJourneyExcel(){
+  exportExcel(window.EXPORT_DATA_JN||[], [
+    {header: 'Login ID', value: function(r){return r.uid;}},
+    {header: 'Email', value: function(r){return r.email;}},
+    {header: 'SDT', value: function(r){return r.phone;}},
+    {header: 'Revenue bo lo', value: function(r){return r.rl;}},
+    {header: 'So buoc', value: function(r){return r.stepsCount;}},
+    {header: 'Hanh trinh', value: function(r){return r.steps;}}
+  ], 'Hanh_Trinh_Khach_Hang');
+}
+/* ────────── END URL TRACKING ────────── */
+
 /* ────────── TABS ────────── */
 function goTab(t,btn){
   document.querySelectorAll('.tbtn').forEach(function(b){b.classList.remove('on');});
@@ -1384,7 +2332,7 @@ function exportHTML(){
   out+='    var el=document.getElementById(id);if(!el)return;\n';
   out+='    try{var par=el.parentNode;var nc=document.createElement("canvas");nc.id=id;par.replaceChild(nc,el);RCH[id]=new Chart(nc,{type:CDATA[id].type,data:CDATA[id].data,options:CDATA[id].options});}catch(e){}\n';
   out+='  });\n';
-  out+='  var tabs=["trend","product","channel","hour","revenue","user","cart","telesales","contact","domain","anon","pending","hosting","action"];\n';
+  out+='  var tabs=["trend","product","channel","hour","revenue","user","cart","telesales","contact","domain","anon","pending","hosting","journey","funnel","affiliate","action"];\n';
   out+='  document.querySelectorAll(".tbtn").forEach(function(b,i){\n';
   out+='    b.addEventListener("click",function(){\n';
   out+='      document.querySelectorAll(".tbtn").forEach(function(x){x.classList.remove("on");});\n';
