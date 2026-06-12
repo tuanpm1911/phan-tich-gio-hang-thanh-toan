@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vibe Hosting — Phân tích 360°</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0b0d14;--s1:#12151f;--s2:#181c28;--s3:#1e2333;--s4:#252b3b;
+  --b1:rgba(255,255,255,.06);--b2:rgba(255,255,255,.1);
+  --tx:#e2e6f0;--mu:#7a849a;
+  --blue:#4d8ef6;--teal:#00c9a0;--amber:#f5c040;--coral:#f47a50;
+  --purple:#a97af5;--rose:#f5527a;
+  --blue-bg:rgba(77,142,246,.13);--teal-bg:rgba(0,201,160,.12);
+  --amber-bg:rgba(245,192,64,.12);--coral-bg:rgba(244,122,80,.12);
+  --purple-bg:rgba(169,122,245,.12);--rose-bg:rgba(245,82,122,.12);
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;font-size:14px}
+.topbar{background:var(--s1);border-bottom:1px solid var(--b1);padding:14px 36px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;flex-wrap:wrap;gap:8px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-logo{width:34px;height:34px;background:linear-gradient(135deg,var(--blue),var(--purple));border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#fff;flex-shrink:0}
+.brand-name{font-size:16px;font-weight:600;letter-spacing:-.3px}
+.brand-sub{font-size:11px;color:var(--mu);margin-top:1px}
+.topbar-chips{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:4px 11px;border-radius:20px;font-size:11px;font-weight:500;border:1px solid}
+.chip-blue{background:var(--blue-bg);color:var(--blue);border-color:rgba(77,142,246,.25)}
+.chip-teal{background:var(--teal-bg);color:var(--teal);border-color:rgba(0,201,160,.22)}
+.chip-amber{background:var(--amber-bg);color:var(--amber);border-color:rgba(245,192,64,.22)}
+.chip-rose{background:var(--rose-bg);color:var(--rose);border-color:rgba(245,82,122,.22)}
+.tabbar{background:var(--s1);border-bottom:1px solid var(--b1);padding:0 36px;display:flex;gap:2px;overflow-x:auto}
+.tab{padding:13px 16px;font-size:12.5px;font-weight:500;color:var(--mu);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;user-select:none}
+.tab:hover{color:var(--tx)}
+.tab.on{color:var(--blue);border-bottom-color:var(--blue)}
+.page{display:none;padding:28px 36px;max-width:1360px;margin:0 auto}
+.page.on{display:block}
+.krow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+.kcard{background:var(--s1);border:1px solid var(--b1);border-radius:13px;padding:18px 20px;position:relative;overflow:hidden}
+.kcard::after{content:'';position:absolute;top:0;left:0;right:0;height:2.5px;border-radius:13px 13px 0 0;background:var(--kc,var(--blue))}
+.klabel{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--mu);margin-bottom:7px}
+.kval{font-size:26px;font-weight:700;letter-spacing:-1px;line-height:1;margin-bottom:5px}
+.ksub{font-size:11px;color:var(--mu)}
+.ksub .up{color:var(--teal)} .ksub .dn{color:var(--rose)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:18px}
+.grid12{display:grid;grid-template-columns:1fr 2fr;gap:16px;margin-bottom:18px}
+.grid21{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:18px}
+.full{margin-bottom:18px}
+.card{background:var(--s1);border:1px solid var(--b1);border-radius:13px;padding:20px 22px}
+.ctitle{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--mu);margin-bottom:15px;display:flex;align-items:center;gap:7px}
+.ctitle .dot{width:7px;height:7px;border-radius:50%;background:var(--blue);flex-shrink:0}
+.cw{position:relative}
+.sh{font-size:20px;font-weight:700;letter-spacing:-.4px;margin-bottom:20px}
+.sh span{color:var(--blue)}
+.hb{margin-bottom:9px}
+.hb-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px}
+.hb-name{color:var(--tx);font-weight:500} .hb-val{color:var(--mu)}
+.hb-track{height:5px;background:var(--s4);border-radius:3px;overflow:hidden}
+.hb-fill{height:100%;border-radius:3px}
+.pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10.5px;font-weight:600}
+.p-blue{background:var(--blue-bg);color:var(--blue)}
+.p-teal{background:var(--teal-bg);color:var(--teal)}
+.p-amber{background:var(--amber-bg);color:var(--amber)}
+.p-rose{background:var(--rose-bg);color:var(--rose)}
+.p-purple{background:var(--purple-bg);color:var(--purple)}
+.p-coral{background:var(--coral-bg);color:var(--coral)}
+.p-gray{background:rgba(122,132,154,.12);color:var(--mu)}
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--mu);padding:7px 11px;text-align:left;border-bottom:1px solid var(--b1)}
+.tbl td{padding:8px 11px;border-bottom:1px solid var(--b1);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--s2)}
+.fn-row{display:flex;align-items:center;gap:12px;background:var(--s2);border:1px solid var(--b1);border-radius:9px;padding:9px 13px;margin-bottom:7px}
+.fn-info{flex:1;min-width:0}
+.fn-label{font-size:12px;font-weight:500}
+.fn-meta{font-size:10.5px;color:var(--mu);margin-top:1px}
+.fn-bw{flex:2}
+.fn-bar{height:6px;border-radius:3px}
+.fn-pct{font-size:13px;font-weight:700;min-width:40px;text-align:right}
+.stat-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--b1)}
+.stat-row:last-child{border-bottom:none}
+.stat-lbl{font-size:12px;color:var(--mu)} .stat-val{font-size:13px;font-weight:600}
+.ig{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ins{background:var(--s1);border:1px solid var(--b1);border-radius:11px;padding:14px 16px;display:flex;gap:11px}
+.ins-ic{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.ins-t{font-size:12.5px;font-weight:600;margin-bottom:3px}
+.ins-b{font-size:11.5px;color:var(--mu);line-height:1.55}
+.scs{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.sc{background:var(--s2);border:1px solid var(--b1);border-radius:11px;padding:14px;text-align:center}
+.sc-av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;margin:0 auto 8px}
+.sc-name{font-size:12px;font-weight:600;margin-bottom:8px}
+.sc-stat{font-size:10px;color:var(--mu)}
+.sc-stat span{font-size:17px;font-weight:700;display:block;color:var(--tx);margin-bottom:3px}
+.sc-tags{display:flex;justify-content:center;gap:4px;flex-wrap:wrap;margin-top:7px}
+.warn{padding:12px 15px;border-radius:9px;font-size:11.5px;margin-top:12px;border:1px solid}
+.warn-red{background:rgba(245,82,122,.08);border-color:rgba(245,82,122,.22)}
+.warn-amber{background:rgba(245,192,64,.07);border-color:rgba(245,192,64,.2)}
+.warn-teal{background:rgba(0,201,160,.08);border-color:rgba(0,201,160,.2)}
+.warn-title{font-weight:600;margin-bottom:3px}
+.warn-body{color:var(--mu);line-height:1.55}
+.rfm-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+.rfm-card{background:var(--s2);border:1px solid var(--b1);border-radius:11px;padding:14px 16px}
+.rfm-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.rfm-val{font-size:22px;font-weight:700;line-height:1}
+.rfm-sub{font-size:10.5px;color:var(--mu);margin-top:3px}
+@media(max-width:900px){
+  .page{padding:16px 14px}
+  .krow{grid-template-columns:repeat(2,1fr)}
+  .grid2,.grid3,.grid12,.grid21{grid-template-columns:1fr}
+  .scs{grid-template-columns:repeat(3,1fr)}
+  .ig{grid-template-columns:1fr}
+  .rfm-grid{grid-template-columns:1fr 1fr}
+  .topbar,.tabbar{padding-left:14px;padding-right:14px}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-logo">V</div>
+    <div>
+      <div class="brand-name">Vibe Hosting — Phân tích 360°</div>
+      <div class="brand-sub">Sheet1 (đơn hàng) + Trang_tính1 (CRM leads) · 12/06/2026</div>
+    </div>
+  </div>
+  <div class="topbar-chips">
+    <span class="chip chip-blue">48 đơn hàng</span>
+    <span class="chip chip-teal">43 khách unique</span>
+    <span class="chip chip-amber">56 CRM leads</span>
+    <span class="chip chip-rose">1.8% CRM convert</span>
+  </div>
+</div>
+
+<nav class="tabbar">
+  <div class="tab on" onclick="go(event,'ov')">📊 Tổng quan</div>
+  <div class="tab" onclick="go(event,'channel')">📡 Kênh &amp; Nguồn</div>
+  <div class="tab" onclick="go(event,'product')">📦 Sản phẩm</div>
+  <div class="tab" onclick="go(event,'customer')">👤 Khách hàng</div>
+  <div class="tab" onclick="go(event,'rfm')">🔮 RFM &amp; Hành vi</div>
+  <div class="tab" onclick="go(event,'crm')">🎯 CRM Pipeline</div>
+  <div class="tab" onclick="go(event,'risk')">⚠️ Rủi ro &amp; Cơ hội</div>
+</nav>
+
+<!-- ===== OVERVIEW ===== -->
+<div id="pg-ov" class="page on">
+  <div class="sh">Tổng quan <span>360°</span></div>
+  <div class="krow">
+    <div class="kcard" style="--kc:#4d8ef6"><div class="klabel">Doanh thu</div><div class="kval" style="color:#4d8ef6">19.05M</div><div class="ksub">Tổng 33 đơn có doanh thu</div></div>
+    <div class="kcard" style="--kc:#00c9a0"><div class="klabel">Tỉ lệ chuyển đổi</div><div class="kval" style="color:#00c9a0">68.8%</div><div class="ksub"><span class="up">33 trả phí</span> / 15 free/trial</div></div>
+    <div class="kcard" style="--kc:#f5c040"><div class="klabel">AOV trung bình</div><div class="kval" style="color:#f5c040">577K</div><div class="ksub">Giá trị đơn hàng trung bình</div></div>
+    <div class="kcard" style="--kc:#a97af5"><div class="klabel">MRR ước tính</div><div class="kval" style="color:#a97af5">2.02M</div><div class="ksub">ARR ~ 24.2M VNĐ/năm</div></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><div class="ctitle"><span class="dot"></span>Doanh thu &amp; đơn theo tháng</div><div class="cw" style="height:210px"><canvas id="c_ov_monthly"></canvas></div></div>
+    <div class="card"><div class="ctitle"><span class="dot" style="background:#00c9a0"></span>Phân bổ đơn theo kênh</div><div class="cw" style="height:210px"><canvas id="c_ov_ch_pie"></canvas></div></div>
+  </div>
+  <div class="grid21">
+    <div class="card"><div class="ctitle"><span class="dot" style="background:#f47a50"></span>Doanh thu theo kênh</div><div class="cw" style="height:200px"><canvas id="c_ov_ch_rev"></canvas></div></div>
+    <div class="card"><div class="ctitle"><span class="dot" style="background:#a97af5"></span>Loại khách hàng</div><div class="cw" style="height:200px"><canvas id="c_ov_cust_type"></canvas></div></div>
+  </div>
+  <div class="sh" style="margin-top:6px">Key <span>Insights</span></div>
+  <div class="ig">
+    <div class="ins"><div class="ins-ic" style="background:rgba(77,142,246,.13)">🏆</div><div><div class="ins-t" style="color:#4d8ef6">Google dẫn đầu — 38.9% tổng doanh thu</div><div class="ins-b">14 đơn, 12 trả phí (85.7% CV), mang về 7.42M. Kênh hiệu quả nhất cần tiếp tục đầu tư.</div></div></div>
+    <div class="ins"><div class="ins-ic" style="background:rgba(245,82,122,.13)">⚠️</div><div><div class="ins-t" style="color:#f5527a">CRM Pipeline: 78.6% leads đang chờ xử lý</div><div class="ins-b">56 leads, chỉ 1 DONE (1.8%). 44 leads ĐỢI = kho ~4-6M cần kích hoạt gấp.</div></div></div>
+    <div class="ins"><div class="ins-ic" style="background:rgba(0,201,160,.12)">📈</div><div><div class="ins-t" style="color:#00c9a0">Khách 1–3 năm có conv rate cao nhất: 84.6%</div><div class="ins-b">13 đơn từ nhóm này, 11 trả phí. Phân khúc vàng — đủ tin tưởng nhưng chưa quá trung thành.</div></div></div>
+    <div class="ins"><div class="ins-ic" style="background:rgba(245,192,64,.12)">💡</div><div><div class="ins-t" style="color:#f5c040">Gói Tiêu chuẩn AOV gấp 1.77× Cơ bản</div><div class="ins-b">832K vs 471K. Upsell từ Cơ bản sang Tiêu chuẩn là đòn bẩy tăng trưởng lớn nhất hiện tại.</div></div></div>
+  </div>
+</div>
+
+<!-- ===== CHANNEL ===== -->
+<div id="pg-channel" class="page">
+  <div class="sh">Kênh <span>&amp; Nguồn khách</span></div>
+  <div class="krow">
+    <div class="kcard" style="--kc:#4d8ef6"><div class="klabel">Google</div><div class="kval" style="color:#4d8ef6">7.42M</div><div class="ksub">12/14 đơn · 85.7% conv</div></div>
+    <div class="kcard" style="--kc:#f5c040"><div class="klabel">Zalo</div><div class="kval" style="color:#f5c040">5.22M</div><div class="ksub">8/9 đơn · 88.9% conv</div></div>
+    <div class="kcard" style="--kc:#00c9a0"><div class="klabel">Trực tiếp</div><div class="kval" style="color:#00c9a0">3.45M</div><div class="ksub">7/9 đơn · 77.8% conv</div></div>
+    <div class="kcard" style="--kc:#f5527a"><div class="klabel">Trial</div><div class="kval" style="color:#f5527a">10%</div><div class="ksub">1/10 đơn convert · 620K</div></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><div class="ctitle"><span class="dot"></span>Số đơn &amp; doanh thu theo kênh</div><div class="cw" style="height:240px"><canvas id="c_ch_bar"></canvas></div></div>
+    <div class="card"><div class="ctitle"><span class="dot" style="background:#00c9a0"></span>Tỉ lệ chuyển đổi theo kênh</div><div id="fn_ch_conv"></div></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><div class="ctitle"><span class="dot" style="background:#f5c040"></span>Kênh × kỳ hạn (đơn trả phí)</div><div class="cw" style="height:220px"><canvas id="c_ch_dur"></canvas></div></div>
+    <div class="card"><div class="ctitle"><span class="dot" style="background:#a97af5"></span>Giờ kích hoạt cao điểm</div><div class="cw" style="height:200px"><canvas id="c_ch_hour"></canvas></div><div style="margin-top:10px;font-size:11px;color:var(--mu)">⏰ Cao điểm: <strong style="color:#f5c040">15:00–17:00</strong> — đảm bảo sale online trong khung giờ này.</div></div>
+  </div>
+  <div class="card full"><div class="ctitle"><span class="dot" style="background:#f47a50"></span>Kích hoạt theo ngày trong tuần</div><div class="cw" style="height:180px"><canvas id="c_ch_dow"></canvas></div><div style="margin-top:10px;font-size:11px;color:var(--mu)">📅 <strong style="color:#f47a50">Thứ 6 (11 đơn)</strong> và Thứ 5 (9 đơn) là 2 ngày mạnh nhất — tập trung chiến dịch retargeting cuối tuần làm việc.</div></div>
+</div>
+
+<!-- ===== PRODUCT ===== -->
+<div id="pg-product" class="page">
+  <div class="sh">Phân tích <span>Sản phẩm</span></div>
+  <div class="krow">
+    <div class="kcard" style="--kc:#4d8ef6"><div class="klabel">Cơ bản — DT</div><div class="kval" style="color:#4d8ef6">9.89M</div><div class="ksub">21/33 đơn · avg 471K</div></div>
+    <div class="kcard" style="--kc:#00c9a0"><div class="klabel">Tiêu chuẩn — DT</div><div class="kval" style="color:#00c9a0">9.15M</div><div class="ksub">11/12 đơn · avg 832K</div></div>
+    <div class="kcard" style="--kc:#f5c040"><div class="klabel">Tiêu chuẩn AOV</div><div class="kval" style="color:#f5c040">832K</div><div class="ksub">Gấp 1.77× gói Cơ bản</div></div>
+    <div class="kcard" style="--kc:#a97af5"><div class="klabel">MRR tổng</div><div class="kval" style="color:#a97af5">2.02M</div><div class="ksub">Tiêu chuẩn 53% · Cơ bản 47%</div></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><div class="ctitle"><span class="dot"></span>Số đơn và doanh thu theo gói</div><div class="cw" style="height:220px"><canvas id="c_pr_compare"></canvas></div></div>
+    <div class="card"><div class="ctitle"><span class="dot" style="background:#00c9a0"></span>Phân bổ kỳ hạn đăng ký</div><div class="cw" style="height:220px"><canvas id="c_pr_dur"></canvas></div></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><div class="ctitle"><span class="dot" style="background:#f5c040"></span>Doanh thu theo gói × kỳ hạn</div><div class="cw" style="height:230px"><canvas id="c_pr_heatmap"></canvas></div></div>
+    <div class="card">
+      <div class="ctitle"><span class="dot" style="background:#a97af5"></span>MRR breakdown</div>
+      <div class="hb"><div class="hb-row"><span class="hb-name">Tiêu chuẩn</span><span class="hb-val">1,073K/tháng</span></div><div class="hb-track"><div class="hb-fill" style="width:100%;background:#00c9a0"></div></div></div>
+      <div class="hb"><div class="hb-row"><span class="hb-name">Cơ bản</span><span class="hb-val">940K/tháng</span></div><div class="hb-track"><div class="hb-fill" style="width:87.6%;background:#4d8ef6"></div></div></div>
+      <div class="hb"><div class="hb-row"><span class="hb-name">Nâng cao</span><span class="hb-val">7K/tháng</span></div><div class="hb-track"><div class="hb-fill" style="width:0.7%;background:#f5c040"></div></div></div>
+      <div style="border-top:1px solid var(--b1);margin-top:14px;padding-top:12px">
+        <div class="stat-row"><span class="stat-lbl">Tổng MRR</span><span class="stat-val" style="color:#a97af5">2,020,004 đ</span></div>
+        <div class="stat-row"><span class="stat-lbl">ARR ước tính</span><span class="stat-val" style="color:#00c9a0">~24.2M đ/năm</span></div>
+        <div class="stat-row"><span class="stat-lbl">Tiêu chuẩn / Cơ bản</span><span class="stat-val" style="color:#f5c040">1.77× AOV</span></div>
+      </div>
+      <div class="warn warn-amber"><div class="warn-title" style="color:#f5c040">💡 Cơ hội upsell lớn</div><div class="warn-body">21 khách Cơ bản. Chuyển 30% (7 khách) sang Tiêu chuẩn = +2.5M/kỳ.</div></div>
+    </div>
+  </div>
+  <div class="card full"><div class="ctitle"><span class="dot" style="background:#f5527a"></span>Phân bổ ngày hết hạn dịch vụ</div><div class="cw" style="height:180px"><canvas id="c_pr_expiry"></canvas></div><div style="margin-top:10px;font-size:11px;color:var(--mu)">📌 Tháng 11/2026 có 10 đơn hết hạn (~4.2M gia hạn tiềm năng). Bắt đầu renewal campaign từ tháng 9/2026.</div></div>
+</div>
+
+<!-- ===== CUSTOMER ===== -->
+<div id="pg-customer" class="page">
+  <div class="sh">Phân tích <span>Khách hàng</span></div>
+  <div class="krow">
+    <div class="kcard" style="--kc:#4d8ef6"><div class="klabel">Khách unique</div><div class="kval" style="color:#4d8ef6">43</div><div class="ksub">48 đơn / 43 customer_id</div></div>
+    <div class="kcard" style="--kc:#00c9a0"><div class="klabel">Cá nhân (B2C)</div><div class="kval" style="color:#00c9a0">41</div><div class="ksub">15.58M · 81.8% tổng DT</div></div>
+    <div class="kcard" style="--kc:#f5c040"><div class="klabel">Doanh nghiệp (B2B)</div><div class="kval" style="color:#f5c040">7</div><div class="ksub">3.47M · 18.2% tổng DT</div></div>
+    <div class="kcard" style="--kc:#a97af5"><div class="klabel">Có affiliate</div><div class="kval" style="color:#a97af5">6</div><div class="ksub">2.64M · 13.9% tổng DT</div></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><div class="ctitle"><span class="dot"></span>Top 10 khách hàng theo doanh thu</div><div class="cw" style="height:280px"><canvas id="c_cust_top10"></canvas></div></div>
+    <div class="card">
+      <div class="ctitle"><span class="dot" style="background:#00c9a0"></span>B2B vs B2C</div>
+      <div class="cw" style="height:180px"><canvas id="c_cust_b2b"></canvas></div>
+      <div style="margin-top:14px">
+        <div class="stat-row"><span class="stat-lbl">B2C AOV avg</span><span class="stat-val">576,940 đ</span></div>
+        <div class="stat-row"><span class="stat-lbl">B2B AOV avg</span><span class="stat-val">578,567 đ</span></div>
+        <div class="stat-row"><span class="stat-lbl">B2B conv rate</span><span class="stat-val" style="color:#00c9a0">85.7%</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="card full">
+    <div class="ctitle"><span class="dot" style="background:#f47a50"></span>Danh sách khách hàng đã thanh toán</div>
+    <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>#</th><th>Khách hàng</th><th>Gói</th><th>Kỳ hạn</th><th>Kênh</th><th>Lần mua</th><th>Hết hạn</th><th>Doanh thu</th></tr></thead><tbody id="cust_tbody"></tbody></table></div>
+  </div>
+</div>
+
+<!-- ===== RFM ===== -->
+<div id="pg-rfm" class="page">
+  <div class="sh">RFM &amp; <span>Hành vi mua hàng</span></div>
+  <div class="rfm-grid">
+    <div class="rfm-card"><div class="rfm-title" style="color:#4d8ef6">Recency</div><div class="rfm-val" style="color:#4d8ef6">T5–T6/26</div><div class="rfm-sub">Toàn bộ đơn trong 2 tháng</div></div>
+    <div class="rfm-card"><div class="rfm-title" style="color:#00c9a0">Frequency</div><div class="rfm-val" style="color:#00c9a0">22.7</div><div class="rfm-sub">Avg tổng lần mua lịch sử</div></div>
+    <div class="rfm-card"><div class="rfm-title" style="color:#f5c040">Monetary</div><div class="rfm-val" style="color:#f5c040">577K</div><div class="rfm-sub">AOV trung bình / đơn trả phí</div></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><div class="ctitle"><span class="dot"></span>Conv rate theo tuổi tài khoản</div><div class="cw" style="height:210px"><canvas id="c_rfm_age"></canvas></div><div style="margin-top:10px;font-size:11px;color:var(--mu)">📊 Khách 1–3 năm conv rate cao nhất (84.6%). Khách mới dưới 1 tháng chỉ 50% — cần thêm thời gian tin tưởng.</div></div>
+    <div class="card"><div class="ctitle"><span class="dot" style="background:#00c9a0"></span>Conv rate theo tần suất mua lịch sử</div><div class="cw" style="height:210px"><canvas id="c_rfm_freq"></canvas></div><div style="margin-top:10px;font-size:11px;color:var(--mu)">🔁 Khách 21–50 lần và 1 lần đều đạt 100% — khách trung thành &amp; khách quyết đoán.</div></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><div class="ctitle"><span class="dot" style="background:#f5c040"></span>Phân bổ tuổi tài khoản (đơn vị: tháng)</div><div class="cw" style="height:220px"><canvas id="c_rfm_age_dist"></canvas></div></div>
+    <div class="card">
+      <div class="ctitle"><span class="dot" style="background:#a97af5"></span>Phân khúc RFM</div>
+      <div id="rfm_segs"></div>
+    </div>
+  </div>
+  <div class="card full">
+    <div class="ctitle"><span class="dot" style="background:#f5527a"></span>Phân tích: Thời gian từ đăng ký tới mua hàng</div>
+    <div class="grid2" style="margin:0;gap:12px">
+      <div>
+        <div class="stat-row"><span class="stat-lbl">Mua ngay (&lt;1 tháng)</span><span class="stat-val" style="color:#00c9a0">6 đơn (12.5%)</span></div>
+        <div class="stat-row"><span class="stat-lbl">Mua sau 1–12 tháng</span><span class="stat-val">5 đơn (10.4%)</span></div>
+        <div class="stat-row"><span class="stat-lbl">Mua sau 1–3 năm</span><span class="stat-val" style="color:#4d8ef6">13 đơn (27.1%)</span></div>
+        <div class="stat-row"><span class="stat-lbl">Mua sau &gt;3 năm</span><span class="stat-val">24 đơn (50%)</span></div>
+      </div>
+      <div>
+        <div class="warn warn-teal"><div class="warn-title" style="color:#00c9a0">✅ Nền tảng ổn định từ khách trung thành</div><div class="warn-body">50% đơn hàng từ khách dùng Tenten &gt;3 năm. Nhưng cần nuôi dưỡng thêm khách mới.</div></div>
+        <div class="warn warn-amber" style="margin-top:8px"><div class="warn-title" style="color:#f5c040">💡 Cơ hội: Khách 1–3 năm convert tốt nhất</div><div class="warn-body">Conv rate 84.6% — retarget nhóm này cho Vibe Hosting sẽ hiệu quả cao.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CRM ===== -->
+<div id="pg-crm" class="page">
+  <div class="sh">CRM <span>Pipeline &amp; Sales</span></div>
+  <div class="krow">
+    <div class="kcard" style="--kc:#4d8ef6"><div class="klabel">Tổng leads</div><div class="kval" style="color:#4d8ef6">56</div><div class="ksub">Leads MKT + Pancake</div></div>
+    <div class="kcard" style="--kc:#00c9a0"><div class="klabel">DONE</div><div class="kval" style="color:#00c9a0">1</div><div class="ksub"><span class="dn">1.8%</span> convert · 902K</div></div>
+    <div class="kcard" style="--kc:#f5527a"><div class="klabel">FAILED</div><div class="kval" style="color:#f5527a">11</div><div class="ksub">19.6% · mất vĩnh viễn</div></div>
+    <div class="kcard" style="--kc:#f5c040"><div class="klabel">ĐỢI</div><div class="kval" style="color:#f5c040">44</div><div class="ksub">78.6% · kho tiềm năng</div></div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <div class="ctitle"><span class="dot"></span>Pipeline funnel</div>
+      <div id="fn_crm"></div>
+      <div class="warn warn-red"><div class="warn-title" style="color:#f5527a">🚨 Convert rate 1.8% — cần hành động ngay</div><div class="warn-body">Tăng lên 10% = +4 đơn = +2.5M VNĐ. Ưu tiên tái kích hoạt 44 leads ĐỢI.</div></div>
+    </div>
+    <div class="card"><div class="ctitle"><span class="dot" style="background:#00c9a0"></span>Leads theo tháng &amp; trạng thái</div><div class="cw" style="height:220px"><canvas id="c_crm_monthly"></canvas></div><div style="margin-top:10px;font-size:11px;color:var(--mu)">📅 T5/2026 nhận nhiều nhất (36 leads). T7 thêm 14 leads mới từ Leads MKT.</div></div>
+  </div>
+  <div class="card full">
+    <div class="ctitle"><span class="dot" style="background:#a97af5"></span>Hiệu suất theo sale</div>
+    <div class="scs">
+      <div class="sc"><div class="sc-av" style="background:rgba(0,201,160,.15);color:#00c9a0">TR</div><div class="sc-name">Trang</div><div class="sc-stat">Leads<span>14</span></div><div class="sc-tags"><span class="pill p-teal">1 DONE</span><span class="pill p-rose">1 FAIL</span><span class="pill p-amber">12 ĐỢI</span></div></div>
+      <div class="sc"><div class="sc-av" style="background:rgba(77,142,246,.15);color:#4d8ef6">TH</div><div class="sc-name">Thanh</div><div class="sc-stat">Leads<span>12</span></div><div class="sc-tags"><span class="pill p-rose">7 FAIL</span><span class="pill p-amber">5 ĐỢI</span></div></div>
+      <div class="sc"><div class="sc-av" style="background:rgba(169,122,245,.15);color:#a97af5">PH</div><div class="sc-name">Phương</div><div class="sc-stat">Leads<span>15</span></div><div class="sc-tags"><span class="pill p-rose">1 FAIL</span><span class="pill p-amber">14 ĐỢI</span></div></div>
+      <div class="sc"><div class="sc-av" style="background:rgba(245,192,64,.15);color:#f5c040">NG</div><div class="sc-name">Ngọc</div><div class="sc-stat">Leads<span>14</span></div><div class="sc-tags"><span class="pill p-rose">1 FAIL</span><span class="pill p-amber">13 ĐỢI</span></div></div>
+      <div class="sc"><div class="sc-av" style="background:rgba(244,122,80,.15);color:#f47a50">HO</div><div class="sc-name">Hoa</div><div class="sc-stat">Leads<span>1</span></div><div class="sc-tags"><span class="pill p-rose">1 FAIL</span></div></div>
+    </div>
+    <div class="warn warn-amber"><div class="warn-title" style="color:#f5c040">⚡ Sale Thanh: FAILED rate 58.3% — cao nhất đội</div><div class="warn-body">7/12 leads bị FAILED. Cần review script, quy trình follow-up và xử lý từ chối. Phương + Ngọc: nhiều leads ĐỢI, cần tăng tốc độ xử lý.</div></div>
+  </div>
+  <div class="card full">
+    <div class="ctitle"><span class="dot" style="background:#f47a50"></span>Nguồn leads CRM</div>
+    <div class="grid12" style="margin:0;gap:16px">
+      <div class="cw" style="height:180px"><canvas id="c_crm_src"></canvas></div>
+      <div>
+        <div class="hb"><div class="hb-row"><span class="hb-name">Leads MKT chuyển</span><span class="hb-val">50 leads (89.3%)</span></div><div class="hb-track"><div class="hb-fill" style="width:89.3%;background:#4d8ef6"></div></div></div>
+        <div class="hb"><div class="hb-row"><span class="hb-name">Pancake</span><span class="hb-val">6 leads (10.7%)</span></div><div class="hb-track"><div class="hb-fill" style="width:10.7%;background:#a97af5"></div></div></div>
+        <div style="margin-top:14px;font-size:11.5px;color:var(--mu);line-height:1.6">Dù Leads MKT chiếm 89.3%, convert rate rất thấp. Cần tối ưu quy trình handoff từ MKT sang sales và cải thiện chất lượng leads đầu vào.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== RISK ===== -->
+<div id="pg-risk" class="page">
+  <div class="sh">Rủi ro <span>&amp; Cơ hội</span></div>
+  <div class="krow">
+    <div class="kcard" style="--kc:#f5527a"><div class="klabel">Hết hạn T11/26</div><div class="kval" style="color:#f5527a">10 đơn</div><div class="ksub">~4.2M DT gia hạn tiềm năng</div></div>
+    <div class="kcard" style="--kc:#f5c040"><div class="klabel">Trial chưa convert</div><div class="kval" style="color:#f5c040">9</div><div class="ksub">~4–5M tiềm năng bỏ lỡ</div></div>
+    <div class="kcard" style="--kc:#00c9a0"><div class="klabel">CRM leads ĐỢI</div><div class="kval" style="color:#00c9a0">44</div><div class="ksub">~4–6M nếu conv thêm 10%</div></div>
+    <div class="kcard" style="--kc:#4d8ef6"><div class="klabel">Upsell tiềm năng</div><div class="kval" style="color:#4d8ef6">21</div><div class="ksub">Khách Cơ bản → Tiêu chuẩn</div></div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <div class="ctitle"><span class="dot" style="background:#f5527a"></span>🚨 Rủi ro churn theo mức độ</div>
+      <div class="fn-row"><div class="fn-info"><div class="fn-label" style="color:#f5527a">Hết hạn trong 3 tháng</div><div class="fn-meta">1 đơn (PHẠM PHÚ LÂM) · 01/07/2026</div></div><div class="fn-bw"><div class="fn-bar" style="width:100%;background:#f5527a"></div></div><div class="fn-pct" style="color:#f5527a">1</div></div>
+      <div class="fn-row"><div class="fn-info"><div class="fn-label" style="color:#f5c040">Hết hạn T11–T12/2026</div><div class="fn-meta">14 đơn · ~6M VNĐ gia hạn</div></div><div class="fn-bw"><div class="fn-bar" style="width:80%;background:#f5c040"></div></div><div class="fn-pct" style="color:#f5c040">14</div></div>
+      <div class="fn-row"><div class="fn-info"><div class="fn-label" style="color:#00c9a0">Hết hạn T5–T6/2027</div><div class="fn-meta">16 đơn · ~11M VNĐ gia hạn</div></div><div class="fn-bw"><div class="fn-bar" style="width:50%;background:#00c9a0"></div></div><div class="fn-pct" style="color:#00c9a0">16</div></div>
+      <div class="fn-row"><div class="fn-info"><div class="fn-label" style="color:#4d8ef6">Hết hạn 2028+</div><div class="fn-meta">2 đơn (24 tháng) · an toàn</div></div><div class="fn-bw"><div class="fn-bar" style="width:15%;background:#4d8ef6"></div></div><div class="fn-pct" style="color:#4d8ef6">2</div></div>
+    </div>
+    <div class="card">
+      <div class="ctitle"><span class="dot" style="background:#00c9a0"></span>✅ Cơ hội tăng trưởng — ưu tiên</div>
+      <div class="fn-row"><div class="fn-info"><div class="fn-label" style="color:#00c9a0">Tái kích hoạt 44 CRM leads ĐỢI</div><div class="fn-meta">+4–6M nếu conv rate 10%</div></div><div class="fn-bw"><div class="fn-bar" style="width:100%;background:#00c9a0"></div></div><div class="fn-pct" style="color:#00c9a0">P1</div></div>
+      <div class="fn-row"><div class="fn-info"><div class="fn-label" style="color:#4d8ef6">Convert 9 trial users</div><div class="fn-meta">+3–5M với onboarding tốt</div></div><div class="fn-bw"><div class="fn-bar" style="width:85%;background:#4d8ef6"></div></div><div class="fn-pct" style="color:#4d8ef6">P2</div></div>
+      <div class="fn-row"><div class="fn-info"><div class="fn-label" style="color:#f5c040">Upsell 21 khách Cơ bản → TC</div><div class="fn-meta">+2.5M nếu 30% upgrade</div></div><div class="fn-bw"><div class="fn-bar" style="width:70%;background:#f5c040"></div></div><div class="fn-pct" style="color:#f5c040">P3</div></div>
+      <div class="fn-row"><div class="fn-info"><div class="fn-label" style="color:#a97af5">Renewal campaign T9/2026</div><div class="fn-meta">Bảo vệ 6M gia hạn T11/2026</div></div><div class="fn-bw"><div class="fn-bar" style="width:55%;background:#a97af5"></div></div><div class="fn-pct" style="color:#a97af5">P4</div></div>
+    </div>
+  </div>
+  <div class="card full">
+    <div class="ctitle"><span class="dot" style="background:#f5c040"></span>Ma trận tần suất × doanh thu</div>
+    <div class="cw" style="height:240px"><canvas id="c_risk_scatter"></canvas></div>
+    <div style="margin-top:10px;font-size:11px;color:var(--mu)">💎 Tống Thanh Lợi (225 lần) và Công ty GMO-Z (110 lần) là 2 khách trung thành nhất platform. Góc trên phải = khách VIP cần chăm sóc đặc biệt.</div>
+  </div>
+  <div class="grid2" style="margin-top:0">
+    <div class="warn warn-red"><div class="warn-title" style="color:#f5527a">🚨 Top 3 rủi ro cần xử lý ngay</div><div class="warn-body" style="margin-top:6px">1. <strong style="color:var(--tx)">PHẠM PHÚ LÂM</strong> hết hạn 01/07/2026 — liên hệ gia hạn tuần này.<br>2. <strong style="color:var(--tx)">Sale Thanh</strong>: 58.3% FAILED — cần coaching khẩn cấp.<br>3. <strong style="color:var(--tx)">44 leads ĐỢI</strong> — phân công lại và tạo urgency campaign.</div></div>
+    <div class="warn warn-teal"><div class="warn-title" style="color:#00c9a0">✅ Top 3 Quick Win</div><div class="warn-body" style="margin-top:6px">1. <strong style="color:var(--tx)">Retarget khách 1–3 năm</strong>: conv 84.6%, thị trường chưa khai thác hết.<br>2. <strong style="color:var(--tx)">Email sequence cho 9 trial users</strong>: nurture 5–7 ngày.<br>3. <strong style="color:var(--tx)">Renewal campaign T9/2026</strong>: nhắm 14 đơn hết hạn T11.</div></div>
+  </div>
+</div>
+
+<script>
+(function() {
+var BL = '#4d8ef6', TE = '#00c9a0', AM = '#f5c040', CO = '#f47a50';
+var PU = '#a97af5', RO = '#f5527a';
+var GR = 'rgba(255,255,255,.04)', TX = '#7a849a';
+var BD = '#0b0d14';
+
+Chart.defaults.color = TX;
+Chart.defaults.font.family = 'Inter,sans-serif';
+Chart.defaults.font.size = 11;
+
+function mk(v) {
+  if (v >= 1000000) return (v/1000000).toFixed(1).replace(/\.0$/,'') + 'M';
+  if (v >= 1000) return (v/1000).toFixed(0) + 'K';
+  return String(v);
+}
+
+function go(e, id) {
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('on'); });
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('on'); });
+  e.target.classList.add('on');
+  document.getElementById('pg-' + id).classList.add('on');
+}
+window.go = go;
+
+var scX = { grid:{color:GR}, ticks:{color:TX}, border:{display:false} };
+var scY = { grid:{color:GR}, ticks:{color:TX}, border:{display:false} };
+var ttBase = { backgroundColor:'#181c28', borderColor:'rgba(255,255,255,.1)', borderWidth:1, titleColor:'#e2e6f0', bodyColor:TX, padding:9 };
+
+function bar(id, labels, datasets, extra) {
+  var opts = { responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip:ttBase }, scales:{ x:scX, y:scY } };
+  if (extra) {
+    if (extra.legend) opts.plugins.legend = extra.legend;
+    if (extra.yFmt) opts.scales.y.ticks = { color:TX, callback:extra.yFmt };
+    if (extra.indexAxis) opts.indexAxis = extra.indexAxis;
+    if (extra.stacked) { opts.scales.x.stacked = true; opts.scales.y.stacked = true; }
+  }
+  new Chart(id, { type:'bar', data:{ labels:labels, datasets:datasets }, options:opts });
+}
+
+function doughnut(id, labels, data, colors) {
+  new Chart(id, { type:'doughnut', data:{ labels:labels, datasets:[{ data:data, backgroundColor:colors, borderWidth:3, borderColor:BD, hoverOffset:5 }] }, options:{ responsive:true, maintainAspectRatio:false, cutout:'62%', plugins:{ legend:{ display:true, position:'bottom', labels:{ color:TX, boxWidth:10, padding:9 } } } } });
+}
+
+// ---- OVERVIEW ----
+new Chart('c_ov_monthly', { type:'bar', data:{
+  labels: ['Tháng 5/2026', 'Tháng 6/2026'],
+  datasets: [
+    { label:'Đơn hàng', data:[33,15], backgroundColor:[BL,TE], borderRadius:6, borderWidth:0, yAxisID:'y' },
+    { label:'Doanh thu', data:[10370311,8678466], type:'line', yAxisID:'y2', borderColor:PU, backgroundColor:'rgba(169,122,245,.15)', fill:true, tension:.4, pointBackgroundColor:PU, borderWidth:2 }
+  ]
+}, options:{
+  responsive:true, maintainAspectRatio:false,
+  plugins:{ legend:{ display:true, position:'top', labels:{ color:TX, boxWidth:10, padding:10 } }, tooltip:ttBase },
+  scales:{
+    x: scX,
+    y: { grid:{color:GR}, ticks:{color:TX}, border:{display:false} },
+    y2: { position:'right', grid:{display:false}, ticks:{ color:TX, callback:function(v){ return mk(v); } }, border:{display:false} }
+  }
+}});
+
+doughnut('c_ov_ch_pie',
+  ['Google (14)','Zalo (9)','Trực tiếp (9)','Trial (10)','Khác (6)'],
+  [14,9,9,10,6],
+  [BL,AM,TE,RO,PU]
+);
+
+bar('c_ov_ch_rev',
+  ['Google','Zalo','Trực tiếp','Leads/KM','Trial(1)'],
+  [{ data:[7423200,5215111,3446666,1868200,620400], backgroundColor:[BL,AM,TE,PU,RO], borderRadius:6, borderWidth:0 }],
+  { yFmt: function(v){ return mk(v); } }
+);
+
+doughnut('c_ov_cust_type',
+  ['Cá nhân (B2C)','Doanh nghiệp (B2B)'],
+  [41,7],
+  [BL,TE]
+);
+
+// ---- CHANNEL ----
+var chConvData = [
+  {n:'Leads MKT',t:2,p:2,r:100,c:TE},
+  {n:'Pancake',t:1,p:1,r:100,c:TE},
+  {n:'Khuyến mãi',t:1,p:1,r:100,c:TE},
+  {n:'Zalo',t:9,p:8,r:88.9,c:AM},
+  {n:'Google',t:14,p:12,r:85.7,c:BL},
+  {n:'Trực tiếp',t:9,p:7,r:77.8,c:CO},
+  {n:'Trial',t:10,p:1,r:10,c:RO},
+  {n:'Email/MKT',t:1,p:0,r:0,c:RO}
+];
+var fnChEl = document.getElementById('fn_ch_conv');
+chConvData.forEach(function(d) {
+  fnChEl.innerHTML += '<div class="hb" style="margin-bottom:10px">' +
+    '<div class="hb-row"><span class="hb-name">' + d.n + '</span>' +
+    '<span class="hb-val">' + d.p + '/' + d.t + ' &nbsp; <strong style="color:' + d.c + '">' + d.r + '%</strong></span></div>' +
+    '<div class="hb-track"><div class="hb-fill" style="width:' + d.r + '%;background:' + d.c + '"></div></div>' +
+    '</div>';
+});
+
+new Chart('c_ch_bar', { type:'bar', data:{
+  labels:['Google','Zalo','Trực tiếp','Trial','Leads MKT','Pancake','KM'],
+  datasets:[
+    { label:'Tổng đơn', data:[14,9,9,10,2,1,1], backgroundColor:'rgba(77,142,246,.3)', borderRadius:4, borderWidth:0 },
+    { label:'Đơn trả phí', data:[12,8,7,1,2,1,1], backgroundColor:BL, borderRadius:4, borderWidth:0 }
+  ]
+}, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:true, position:'top', labels:{ color:TX, boxWidth:10, padding:9 } }, tooltip:ttBase }, scales:{ x:scX, y:scY } }});
+
+new Chart('c_ch_dur', { type:'bar', data:{
+  labels:['Google','Zalo','Trực tiếp','Leads/KM'],
+  datasets:[
+    { label:'6 tháng', data:[3,2,7,2], backgroundColor:TE, borderRadius:3 },
+    { label:'12 tháng', data:[9,5,0,0], backgroundColor:BL, borderRadius:3 },
+    { label:'24 tháng', data:[0,1,1,0], backgroundColor:PU, borderRadius:3 }
+  ]
+}, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:true, position:'top', labels:{ color:TX, boxWidth:10, padding:9 } }, tooltip:ttBase }, scales:{ x:scX, y:scY } }});
+
+new Chart('c_ch_hour', { type:'bar', data:{
+  labels:['0h','7h','9h','10h','11h','12h','13h','14h','15h','16h','17h','18h','19h','21h','22h'],
+  datasets:[{ data:[2,1,5,4,4,1,1,3,10,1,8,2,2,2,2],
+    backgroundColor: function(ctx){ var v=ctx.parsed.y; return v>=8?CO:(v>=4?BL:'rgba(77,142,246,.3)'); },
+    borderRadius:4, borderWidth:0 }]
+}, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip:ttBase }, scales:{ x:scX, y:scY } }});
+
+bar('c_ch_dow',
+  ['T2','T3','T4','T5','T6','T7','CN'],
+  [{ data:[6,8,8,9,11,3,3], backgroundColor:[BL,BL,BL,BL,CO,'rgba(77,142,246,.3)','rgba(77,142,246,.3)'], borderRadius:4, borderWidth:0 }]
+);
+
+// ---- PRODUCT ----
+new Chart('c_pr_compare', { type:'bar', data:{
+  labels:['Cơ bản','Tiêu chuẩn','Nâng cao'],
+  datasets:[
+    { label:'Tổng đơn', data:[33,12,3], backgroundColor:'rgba(77,142,246,.3)', borderRadius:4 },
+    { label:'Đơn trả phí', data:[21,11,1], backgroundColor:BL, borderRadius:4 }
+  ]
+}, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:true, position:'top', labels:{ color:TX, boxWidth:10, padding:9 } }, tooltip:ttBase }, scales:{ x:scX, y:scY } }});
+
+doughnut('c_pr_dur',
+  ['12 tháng (18)','6 tháng (17)','1 tháng (11)','24 tháng (2)'],
+  [18,17,11,2],
+  [BL,TE,AM,PU]
+);
+
+new Chart('c_pr_heatmap', { type:'bar', data:{
+  labels:['6 tháng','12 tháng','24 tháng'],
+  datasets:[
+    { label:'Cơ bản', data:[2323200,5702400,1862666], backgroundColor:BL, borderRadius:4 },
+    { label:'Tiêu chuẩn', data:[3722400,5431111,0], backgroundColor:TE, borderRadius:4 }
+  ]
+}, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:true, position:'top', labels:{ color:TX, boxWidth:10, padding:9 } }, tooltip:ttBase }, scales:{ x:scX, y:{ grid:{color:GR}, ticks:{ color:TX, callback:function(v){ return mk(v); } }, border:{display:false} } } }});
+
+bar('c_pr_expiry',
+  ['Jul 2026','Nov 2026','Dec 2026','May 2027','Jun 2027','May 2028','Jun 2028'],
+  [{ data:[1,10,4,9,7,1,1], backgroundColor:[RO,AM,BL,TE,BL,PU,PU], borderRadius:5, borderWidth:0 }]
+);
+
+// ---- CUSTOMER TABLE ----
+var custData = [
+  ['ĐỖ XUÂN HUY','Tiêu chuẩn','12T','Google',27,'2027-06-09',1128000],
+  ['Nguyễn Văn Đạo','Tiêu chuẩn','12T','Google',28,'2027-06-03',1128000],
+  ['Tống Thanh Lợi','Tiêu chuẩn','12T','Google',225,'2027-06-08',1128000],
+  ['Đỗ Nguyễn Anh Thư','Tiêu chuẩn','12T','Zalo',2,'2027-06-06',1128000],
+  ['Nguyễn Tiến Hiệp','Cơ bản','24T','Zalo',20,'2028-05-26',1056000],
+  ['Phạm Thanh Sơn','Tiêu chuẩn','12T','Zalo',7,'2027-05-07',919111],
+  ['Mai van tam','Cơ bản','24T','Trực tiếp',5,'2028-06-08',806666],
+  ['Dương Văn Hải','Tiêu chuẩn','6T','Leads MKT',5,'2026-12-09',620400],
+  ['TRƯƠNG QUỐC HUY','Tiêu chuẩn','6T','Leads MKT',2,'2026-11-16',620400],
+  ['Bùi Văn Quân','Tiêu chuẩn','6T','Trial',17,'2026-11-29',620400],
+  ['Trần Việt Cường','Tiêu chuẩn','6T','Trực tiếp',74,'2026-11-15',620400],
+  ['Đỗ Việt Tiến','Tiêu chuẩn','6T','Trực tiếp',21,'2026-12-11',620400],
+  ['VŨ TRỌNG DŨNG','Tiêu chuẩn','6T','Trực tiếp',2,'2026-11-29',620400],
+  ['Lê Thanh Nam','Cơ bản','12T','Google',43,'2027-05-13',528000],
+  ['Lương Văn Huân','Cơ bản','12T','Google',4,'2027-05-22',528000],
+  ['ĐỖ XUÂN HUY (2)','Cơ bản','12T','Google',27,'2027-06-03',528000],
+  ['Vũ Việt Anh','Cơ bản','12T','Google',21,'2027-05-13',528000],
+  ['Nguyễn Sỹ Hoàng','Cơ bản','12T','Zalo',8,'2027-05-15',528000],
+  ['Đào Tiến Bằng','Cơ bản','12T','Zalo',4,'2027-05-08',528000],
+  ['Trần Thái Hòa','Cơ bản','12T','Trực tiếp',12,'2027-05-13',528000],
+  ['Hoàng Đình Đại','Cơ bản','12T','Google',4,'2027-06-09',528000],
+  ['Hoàng Quốc Minh Thiên','Cơ bản','12T','Zalo',3,'2027-05-13',475200],
+  ['Nguyễn Thị Huyền Trang','Cơ bản','12T','Khuyến mãi',1,'2027-06-03',475200],
+  ['Phạm Tiến Tài','Cơ bản','6T','Trực tiếp',18,'2026-12-05',290400],
+  ['Trần Quốc Vinh','Cơ bản','6T','Email+Google',3,'2026-11-17',290400],
+  ['Nguyễn Anh Minh','Cơ bản','6T','Google',18,'2026-11-23',290400],
+  ['Nguyễn Tuấn Anh','Cơ bản','6T','Google',3,'2026-11-30',290400],
+  ['Bùi Thanh Huấn','Cơ bản','6T','Trực tiếp',3,'2026-12-07',290400],
+  ['Nguyễn Thanh Bình','Cơ bản','6T','Trực tiếp',1,'2026-11-26',290400],
+  ['Nguyễn Xuân Hiếu','Cơ bản','6T','Zalo',9,'2026-11-14',290400],
+  ['Đàm Tuấn Anh','Cơ bản','6T','Zalo+Leads',3,'2026-11-11',290400],
+  ['Đoàn Long','Cơ bản','12T','Google',12,'2027-05-08',290400],
+  ['PHẠM PHÚ LÂM','Nâng cao','1T','Pancake',3,'2026-07-01',7000]
+];
+var pPill = {'Cơ bản':'p-blue','Tiêu chuẩn':'p-teal','Nâng cao':'p-amber'};
+var cPill = {'Google':'p-blue','Zalo':'p-amber','Trực tiếp':'p-teal','Leads MKT':'p-purple','Khuyến mãi':'p-purple','Pancake':'p-purple','Trial':'p-rose','Email+Google':'p-gray','Zalo+Leads':'p-amber'};
+var tbody = document.getElementById('cust_tbody');
+var now0 = new Date('2026-06-12');
+custData.forEach(function(c, i) {
+  var nm=c[0],pr=c[1],du=c[2],ch=c[3],fr=c[4],exp=c[5],rev=c[6];
+  var diff = Math.round((new Date(exp) - now0) / 86400000);
+  var ec = diff < 30 ? 'p-rose' : (diff < 120 ? 'p-amber' : 'p-teal');
+  tbody.innerHTML += '<tr>' +
+    '<td style="color:var(--mu)">' + (i+1) + '</td>' +
+    '<td style="font-weight:500">' + nm + '</td>' +
+    '<td><span class="pill ' + (pPill[pr]||'p-gray') + '">' + pr + '</span></td>' +
+    '<td>' + du + '</td>' +
+    '<td><span class="pill ' + (cPill[ch]||'p-gray') + '">' + ch + '</span></td>' +
+    '<td style="color:var(--mu)">' + fr + '</td>' +
+    '<td><span class="pill ' + ec + '">' + exp + '</span></td>' +
+    '<td style="font-weight:600;color:#4d8ef6">' + rev.toLocaleString('vi-VN') + ' đ</td>' +
+    '</tr>';
+});
+
+new Chart('c_cust_top10', { type:'bar', data:{
+  labels: custData.slice(0,10).map(function(c){ return c[0]; }),
+  datasets:[{ data: custData.slice(0,10).map(function(c){ return c[6]; }), backgroundColor:[CO,CO,CO,CO,BL,BL,BL,TE,TE,TE], borderRadius:4, borderWidth:0 }]
+}, options:{ responsive:true, maintainAspectRatio:false, indexAxis:'y', plugins:{ legend:{display:false}, tooltip:ttBase }, scales:{ x:{ grid:{color:GR}, ticks:{ color:TX, callback:function(v){ return mk(v); } }, border:{display:false} }, y:{ grid:{color:GR}, ticks:{ color:TX, font:{size:10} }, border:{display:false} } } }});
+
+doughnut('c_cust_b2b', ['Cá nhân (B2C) 81.8%','Doanh nghiệp (B2B) 18.2%'], [15577377,3471400], [BL,TE]);
+
+// ---- RFM ----
+new Chart('c_rfm_age', { type:'bar', data:{
+  labels:['Mới <1T','1–12T','1–3 năm','>3 năm'],
+  datasets:[
+    { label:'Conv rate (%)', data:[50,60,84.6,66.7], backgroundColor:[RO,AM,TE,BL], borderRadius:5, borderWidth:0, yAxisID:'y' },
+    { label:'Số đơn', data:[6,5,13,24], type:'line', borderColor:PU, backgroundColor:'rgba(169,122,245,.1)', fill:true, tension:.4, pointBackgroundColor:PU, borderWidth:2, yAxisID:'y2' }
+  ]
+}, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:true, position:'top', labels:{ color:TX, boxWidth:10, padding:8 } }, tooltip:ttBase }, scales:{
+  x:scX,
+  y:{ grid:{color:GR}, ticks:{ color:TX, callback:function(v){ return v+'%'; } }, border:{display:false} },
+  y2:{ position:'right', grid:{display:false}, ticks:{color:TX}, border:{display:false} }
+}}});
+
+bar('c_rfm_freq',
+  ['1 lần','2–5 lần','6–10 lần','11–20 lần','21–50 lần','51+ lần'],
+  [{ data:[100,66.7,60,75,100,33.3], backgroundColor:[TE,BL,AM,BL,TE,RO], borderRadius:5, borderWidth:0 }],
+  { yFmt: function(v){ return v+'%'; } }
+);
+
+bar('c_rfm_age_dist',
+  ['0–1T','1–6T','6T–1N','1–2N','2–3N','3–5N','5N+'],
+  [{ data:[6,2,3,8,5,12,12], backgroundColor:PU, borderRadius:4, borderWidth:0 }]
+);
+
+var rfmEl = document.getElementById('rfm_segs');
+var rfmData = [
+  {t:'Champions (21-50 lần, >500K)',v:'6 đơn',s:'100% conv · avg 743K',c:TE},
+  {t:'Loyal (6–20 lần, trả phí)',v:'13 đơn',s:'75% conv · Lõi khách hàng ổn định',c:BL},
+  {t:'New Customer (<1 tháng TK)',v:'6 đơn',s:'50% conv · Cần onboarding tốt hơn',c:AM},
+  {t:'Hibernating (51+ lần, thấp)',v:'6 đơn',s:'33% conv · Quen platform nhưng ít gắn kết',c:RO}
+];
+rfmData.forEach(function(r) {
+  rfmEl.innerHTML += '<div style="background:var(--s2);border:1px solid var(--b1);border-radius:9px;padding:10px 13px;margin-bottom:8px">' +
+    '<div style="font-size:12px;font-weight:600;color:' + r.c + ';margin-bottom:2px">' + r.t + ' <span style="float:right;font-size:13px;font-weight:700;color:var(--tx)">' + r.v + '</span></div>' +
+    '<div style="font-size:11px;color:var(--mu)">' + r.s + '</div></div>';
+});
+
+// ---- CRM ----
+var fnCrmEl = document.getElementById('fn_crm');
+var crmFn = [
+  {l:'Tổng leads nhận vào',n:56,m:'Từ Leads MKT + Pancake',r:100,c:BL},
+  {l:'Đang xử lý (ĐỢI)',n:44,m:'78.6% — chưa có kết quả',r:78.6,c:AM},
+  {l:'Thất bại (FAILED)',n:11,m:'19.6% — cần phân tích nguyên nhân',r:19.6,c:RO},
+  {l:'Chốt thành công (DONE)',n:1,m:'Phạm Thanh Sơn · 902,400 đ',r:1.8,c:TE}
+];
+crmFn.forEach(function(d) {
+  fnCrmEl.innerHTML += '<div class="fn-row">' +
+    '<div class="fn-info"><div class="fn-label">' + d.l + '</div><div class="fn-meta">' + d.m + '</div></div>' +
+    '<div class="fn-bw"><div class="fn-bar" style="width:' + d.r + '%;background:' + d.c + '"></div></div>' +
+    '<div class="fn-pct" style="color:' + d.c + '">' + d.n + '</div></div>';
+});
+
+new Chart('c_crm_monthly', { type:'bar', data:{
+  labels:['Feb 26','Mar 26','Apr 26','May 26','Jun 26','Jul 26','Sep 26','Dec 26'],
+  datasets:[
+    { label:'ĐỢI', data:[1,0,1,26,1,13,1,1], backgroundColor:AM, borderRadius:3 },
+    { label:'FAILED', data:[0,1,0,9,0,1,0,0], backgroundColor:RO, borderRadius:3 },
+    { label:'DONE', data:[0,0,0,1,0,0,0,0], backgroundColor:TE, borderRadius:3 }
+  ]
+}, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:true, position:'top', labels:{ color:TX, boxWidth:10, padding:8 } }, tooltip:ttBase }, scales:{ x:scX, y:scY } }});
+
+doughnut('c_crm_src', ['Leads MKT (50)','Pancake (6)'], [50,6], [BL,PU]);
+
+// ---- RISK scatter ----
+var scatterData = custData.map(function(c) { return { x:c[4], y:Math.round(c[6]/1000), r:Math.max(4, Math.sqrt(c[6]/1000)*0.7) }; });
+new Chart('c_risk_scatter', { type:'bubble', data:{
+  datasets:[{ label:'Khách hàng', data:scatterData, backgroundColor:'rgba(77,142,246,.5)', borderColor:'rgba(77,142,246,.85)', borderWidth:1 }]
+}, options:{ responsive:true, maintainAspectRatio:false,
+  plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:function(c){ return 'Tần suất: '+c.raw.x+' | DT: '+c.raw.y+'K'; } }, backgroundColor:'#181c28', borderColor:'rgba(255,255,255,.1)', borderWidth:1, titleColor:'#e2e6f0', bodyColor:TX } },
+  scales:{
+    x:{ grid:{color:GR}, ticks:{color:TX}, border:{display:false}, title:{display:true,text:'Số lần mua lịch sử',color:TX} },
+    y:{ grid:{color:GR}, ticks:{ color:TX, callback:function(v){ return v+'K'; } }, border:{display:false}, title:{display:true,text:'Doanh thu (K đồng)',color:TX} }
+  }
+}});
+
+})();
+</script>
+</body>
+</html>
